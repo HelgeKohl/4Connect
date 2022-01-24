@@ -16,7 +16,11 @@ public class ObjectDetection
         // TODO: Dafür wird noch eine Lösung gebraucht ...
         //board_haar_cascade = new CascadeClassifier(@"C:\Development\arvr-projekt-meta\data\images\cascade\cascade.xml");
         //board_haar_cascade = new CascadeClassifier(@"http://pastebin.com/raw/UavKbfwm");
-        board_haar_cascade = new CascadeClassifier(Application.dataPath + @"/Haar/cascade.xml");
+        //board_haar_cascade = new CascadeClassifier(Application.dataPath + @"/StreamingAssets/Haar/cascade.xml");
+        string file = Application.streamingAssetsPath + @"/Haar/cascade.xml";
+        //file = "Haar/cascade.xml";
+        Debug.Log(file);
+        board_haar_cascade = new CascadeClassifier(file);
     }
 
     public Texture2D DetectObjects(Mat image)
