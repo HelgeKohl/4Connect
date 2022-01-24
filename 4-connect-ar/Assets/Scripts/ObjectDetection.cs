@@ -3,11 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectDetection : MonoBehaviour
+public class ObjectDetection
 {
     CascadeClassifier board_haar_cascade;
     List<OpenCvSharp.Rect> boardBounds = new List<OpenCvSharp.Rect>();
-    Texture2D currentOverlay;
 
     public ObjectDetection()
     {
@@ -15,8 +14,9 @@ public class ObjectDetection : MonoBehaviour
         //Download location: https://github.com/opencv/opencv/tree/master/data/haarcascades
         //
         // TODO: Dafür wird noch eine Lösung gebraucht ...
-        //board_haar_cascade = new CascadeClassifier(@"C:\Development\arvr-projekt\data\images\cascade\cascade.xml");
-        board_haar_cascade = new CascadeClassifier(@"https://cdn.discordapp.com/attachments/933311227550138419/935176953642766356/cascade.xml");
+        //board_haar_cascade = new CascadeClassifier(@"C:\Development\arvr-projekt-meta\data\images\cascade\cascade.xml");
+        //board_haar_cascade = new CascadeClassifier(@"http://pastebin.com/raw/UavKbfwm");
+        board_haar_cascade = new CascadeClassifier(Application.dataPath + @"/Haar/cascade.xml");
     }
 
     public Texture2D DetectObjects(Mat image)
@@ -48,7 +48,7 @@ public class ObjectDetection : MonoBehaviour
 
         OpenCvHelper.Overlay = OpenCvSharp.Unity.MatToTexture(image);
         
-        return currentOverlay;
+        return OpenCvHelper.Overlay;
     }
 
     private Mat ConvertGrayScale(Mat image)

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CustomCamera : MonoBehaviour
+public class CustomCamera
 {
     private bool isCameraAvailable;
     private WebCamTexture cameraTexture;

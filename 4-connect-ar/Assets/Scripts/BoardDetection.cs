@@ -32,7 +32,7 @@ public class BoardDetection : MonoBehaviour
     }
 
     private void Update()
-    {   
+    {
 
     }
 
