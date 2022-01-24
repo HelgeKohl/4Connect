@@ -13,6 +13,7 @@ public class BoardDetection : MonoBehaviour
     public int Height = 480;
 
     ObjectDetection objectDetection;
+    StateDetection stateDetection;
     CustomCamera camera;
 
     // Debug
@@ -29,11 +30,12 @@ public class BoardDetection : MonoBehaviour
         Screen.SetResolution(Width, Height, FullScreenMode.Windowed);
         camera = new CustomCamera(background, Width, Height);
         objectDetection = new ObjectDetection();
+        stateDetection = new StateDetection();
     }
 
     private void Update()
     {
-
+        
     }
 
     private void FixedUpdate()
@@ -44,8 +46,11 @@ public class BoardDetection : MonoBehaviour
 
         // Objekterkennung durchführen
         Mat mat = camera.GetCurrentFrameAsMat();
-        Texture2D texture = objectDetection.DetectObjects(mat);
-        background.texture = texture;
+        //Texture2D texture = objectDetection.DetectObjects(mat);
+        int[,] grid = stateDetection.detectState(mat);
+
+
+        //background.texture = texture;
         // ---
 
         stopwatch.Stop();
@@ -53,5 +58,24 @@ public class BoardDetection : MonoBehaviour
         {
             Debug.Log(stopwatch.ElapsedMilliseconds);
         }
+        if (this.debug)
+        {
+            printGrid(grid);
+        }
+    }
+
+    private void printGrid(int[,] grid)
+    {
+        Debug.Log("#############");
+        string grid_str = "";
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                grid_str += grid[i, j] + "\t";
+            }
+            grid_str += "\n";
+        }
+        Debug.Log(grid_str);
     }
 }
