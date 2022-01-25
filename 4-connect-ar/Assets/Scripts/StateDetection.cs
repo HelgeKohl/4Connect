@@ -24,6 +24,10 @@ public class StateDetection
     private OpenCvSharp.Scalar lower_blue;
     private OpenCvSharp.Scalar higher_blue;
 
+    // TODO get Col Coords
+    // Gültigkeit prüfen - ROT beginnt immer!
+    // Falscherkennung abfangen
+    // Coord einzelne Chips
     public StateDetection()
     {
         lower_red_1 = new OpenCvSharp.Scalar(0, 100, 50);
