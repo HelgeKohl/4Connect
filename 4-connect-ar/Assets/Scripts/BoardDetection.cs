@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -171,12 +172,14 @@ public class BoardDetection : MonoBehaviour
 
                 Mat matObjects = objectDetection.DetectObjects(threadInputMat);
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
-                board.State = stateDetection.detectState(threadInputMat);
+                int[,] grid = stateDetection.detectState(threadInputMat);
+                
+                // Prüfe ob State sich geändert hat
+                bool gridStateHasChanged = stateChanged(grid, board.State);
 
-                // Status übergeben
+                // aktualisieren des States
+                board.State = grid;
 
-                // Statt true: Wenn sich das Grid zum vorherigen Status geändert hat
-                bool gridStateHasChanged = true;
                 if (gridStateHasChanged)
                 {
                     Agent.RequestDecision();
@@ -196,5 +199,23 @@ public class BoardDetection : MonoBehaviour
                 // -> ignore the exception since it is produced on purpose
             }
         }
+    }
+
+    //  Quelle: https://stackoverflow.com/questions/12446770/how-to-compare-multidimensional-arrays-in-c-sharp user287107 Antwort 1
+    /// <summary>
+    /// Vergleich zweier int[,] Grids
+    /// <param name="inputGrid1">Erstes Grid</param>
+    /// <param name="inputGrid2">Zweites Grid</param>
+    /// <returns>Gleichheit der beiden Grids</returns>
+    /// </summary>
+    private bool stateChanged(int[,] inputGrid1, int[,] inputGrid2)
+    {
+        bool equal = (
+            inputGrid1.Rank == inputGrid2.Rank &&
+            Enumerable.Range(0, inputGrid1.Rank).All(dimension => inputGrid1.GetLength(dimension) == inputGrid2.GetLength(dimension)) &&
+            inputGrid1.Cast<int>().SequenceEqual(inputGrid2.Cast<int>())
+        );
+
+        return !equal;
     }
 }
