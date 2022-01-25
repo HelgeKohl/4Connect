@@ -157,38 +157,6 @@ public class BoardDetection : MonoBehaviour
         return colors;
     }
 
-    // TODO überflüssig, wenn Grid anders zurückgegeben wird
-    public int[,] TransposeRowsAndColumns(int[,] arr)
-    {
-        int rowCount = arr.GetLength(0);
-        int columnCount = arr.GetLength(1);
-        int[,] transposed = new int[columnCount, rowCount];
-        if (rowCount == columnCount)
-        {
-            transposed = (int[,])arr.Clone();
-            for (int i = 1; i < rowCount; i++)
-            {
-                for (int j = 0; j < i; j++)
-                {
-                    int temp = transposed[i, j];
-                    transposed[i, j] = transposed[j, i];
-                    transposed[j, i] = temp;
-                }
-            }
-        }
-        else
-        {
-            for (int column = 0; column < columnCount; column++)
-            {
-                for (int row = 0; row < rowCount; row++)
-                {
-                    transposed[column, row] = arr[row, column];
-                }
-            }
-        }
-        return transposed;
-    }
-
     // Runs in a thread!
     void CalculateOpenCvWork()
     {
@@ -203,12 +171,9 @@ public class BoardDetection : MonoBehaviour
 
                 Mat matObjects = objectDetection.DetectObjects(threadInputMat);
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
-                int[,] grid = stateDetection.detectState(threadInputMat);
+                board.State = stateDetection.detectState(threadInputMat);
 
                 // Status übergeben
-                // TODO: Hat wahrscheinlich die falsche Dimension
-                // TransposeRowsAndColumns muss unnötig gemacht werden
-                board.State = TransposeRowsAndColumns(grid);
 
                 // Statt true: Wenn sich das Grid zum vorherigen Status geändert hat
                 bool gridStateHasChanged = true;

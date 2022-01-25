@@ -38,7 +38,7 @@ public class StateDetection
 
     public int[,] detectState(Mat frame)
     {
-        int[,] grid = new int[rows, cols];
+        int[,] grid = new int[cols, rows];
         // Image Preprocessing
         Mat preproccessed = new Mat();
         imagePreprocessing(frame, out preproccessed);
@@ -213,7 +213,7 @@ public class StateDetection
         Cv2.BitwiseAnd(frame, frame, img_yellow, mask_yellow);
         img_yellow.Dispose();
 
-        int[,] grid = new int[rows, cols];
+        int[,] grid = new int[cols, rows];
         
         for (int x_i = 0; x_i < cols; x_i++)
         {
@@ -234,11 +234,11 @@ public class StateDetection
 
                 if (Cv2.CountNonZero(img_res_red) > 0)
                 {
-                    grid[y_i, x_i] = id_red;
+                    grid[x_i, y_i] = id_red;
                 }
                 else if (Cv2.CountNonZero(img_res_yellow) > 0)
                 {
-                    grid[y_i, x_i] = id_yellow;
+                    grid[x_i, y_i] = id_yellow;
                 }
 
                 img_grid_circle.Dispose();
