@@ -23,7 +23,7 @@ public class ObjectDetection
         board_haar_cascade = new CascadeClassifier(file);
     }
 
-    public Texture2D DetectObjects(Mat image)
+    public Mat DetectObjects(Mat image)
     {
         if (image == null)
         {
@@ -50,9 +50,10 @@ public class ObjectDetection
         // Mark the detected board on the original frame
         MarkFeatures(image);
 
-        OpenCvHelper.Overlay = OpenCvSharp.Unity.MatToTexture(image);
-        
-        return OpenCvHelper.Overlay;
+        //OpenCvHelper.Overlay = OpenCvSharp.Unity.MatToTexture(image);
+
+        //return OpenCvHelper.Overlay;
+        return image;
     }
 
     private Mat ConvertGrayScale(Mat image)

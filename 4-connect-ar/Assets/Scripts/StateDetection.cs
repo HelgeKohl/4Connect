@@ -68,13 +68,21 @@ public class StateDetection
         // Mask for Board
         Mat blue_mask = new Mat();
         Cv2.InRange(hsv, lower_blue, higher_blue, blue_mask);
+        hsv.Dispose();
 
         Mat board_only = new Mat();
         Cv2.BitwiseAnd(FrameIn, FrameIn, board_only, blue_mask);
+        blue_mask.Dispose();
 
+        // TODO: Wird benötigt?
+        // Performance!
+        //
         // apply bilateral_filter
-        Mat bilateral_filter = new Mat();
-        Cv2.BilateralFilter(board_only, bilateral_filter, 9, 175, 175);
+        //Mat bilateral_filter = new Mat();
+        //Cv2.BilateralFilter(board_only, bilateral_filter, 9, 175, 175);
+        //board_only.Dispose();
+
+        Mat bilateral_filter = board_only;
 
         // convert to grayscale
         Cv2.CvtColor(bilateral_filter, bilateral_filter, ColorConversionCodes.BGR2GRAY);
@@ -86,13 +94,13 @@ public class StateDetection
         Mat dilated = new Mat();
         Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
         Cv2.Dilate(bilateral_filter, dilated, kernel, null, 1);
+        bilateral_filter.Dispose();
+        kernel.Dispose();
 
         // canny edge detection
-        Mat canny = new Mat();
-        Cv2.Canny(dilated, canny, 175, 200);
-
-        FrameOut = canny;
-        //background.texture = OpenCvSharp.Unity.MatToTexture(board_only);
+        FrameOut = new Mat();
+        Cv2.Canny(dilated, FrameOut, 175, 200);
+        dilated.Dispose();
     }
 
     // setup list of holes
@@ -189,19 +197,24 @@ public class StateDetection
 
         Mat mask_red = new Mat();
         mask_red = mask1 + mask2;
+        mask1.Dispose();
+        mask2.Dispose();
 
         Mat img_red = new Mat();
         Cv2.BitwiseAnd(frame, frame, img_red, mask_red);
+        img_red.Dispose();
 
         // yellow chips
         Mat mask_yellow = new Mat();
         Cv2.InRange(hsv, lower_yellow, higher_yellow, mask_yellow);
+        hsv.Dispose();
 
         Mat img_yellow = new Mat();
         Cv2.BitwiseAnd(frame, frame, img_yellow, mask_yellow);
+        img_yellow.Dispose();
 
         int[,] grid = new int[rows, cols];
-
+        
         for (int x_i = 0; x_i < cols; x_i++)
         {
             int x = (int)(min_x + x_i * col_spacing);
@@ -227,8 +240,15 @@ public class StateDetection
                 {
                     grid[y_i, x_i] = id_yellow;
                 }
+
+                img_grid_circle.Dispose();
+                img_res_red.Dispose();
+                img_res_yellow.Dispose();
             }
         }
+
+        mask_red.Dispose();
+        mask_yellow.Dispose();
 
         return grid;
     }
