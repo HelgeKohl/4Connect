@@ -254,7 +254,7 @@ public class StateDetection
                 img_res_yellow.Dispose();
             }
 
-            result.ColCoords[x_i] = new int[] { x, (result.HoleCoords[x_i, 0][1] - (int)mean_h)};
+            result.ColCoords[x_i] = new int[] { x, (result.HoleCoords[x_i, 0][1] - (int)mean_h * 2)};
         }
 
 

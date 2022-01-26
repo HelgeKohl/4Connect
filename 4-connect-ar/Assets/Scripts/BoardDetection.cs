@@ -180,6 +180,7 @@ public class BoardDetection : MonoBehaviour
                 {
                     // aktualisieren des States
                     board.State = result.State;
+                    
 
                     if (gridStateHasChanged && result.isValid)
                     {
@@ -187,6 +188,18 @@ public class BoardDetection : MonoBehaviour
                         Agent.RequestDecision();
                         board.UpdateWinstate();
                     }
+
+                    foreach (int[] item in result.ColCoords)
+                    {
+                        OpenCvSharp.Rect bounds = new OpenCvSharp.Rect();
+                        bounds.X = item[0];
+                        bounds.Y = item[1];
+                        bounds.Width = 1;
+                        bounds.Height = 1;
+                        Cv2.Rectangle(boardRegion, bounds, new Scalar(0, 255, 0), thickness: 5);
+                    }
+
+                    threadResponseMat = boardRegion;
                 }
 
                 // Was soll angezeigt werden

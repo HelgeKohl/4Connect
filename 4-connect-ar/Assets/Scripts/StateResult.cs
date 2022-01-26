@@ -17,7 +17,7 @@ public class StateResult
     public StateResult()
     {
         State = new int[7, 6];
-        ColCoords = new int[7];
+        ColCoords = new int[7][];
         HoleCoords = new int[7, 6][];
         CountRedChips = 0;
         CountYellowChips = 0;
