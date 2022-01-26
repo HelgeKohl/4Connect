@@ -33,7 +33,7 @@ public class BoardDetection : MonoBehaviour
     public GameObject YellowPiece;
     private float posX;
     private float posY;
-    private int suggestedIndex;
+    private int suggestedIndex = -1;
 
     // WinStates
     public GameObject YellowWon;
@@ -83,7 +83,7 @@ public class BoardDetection : MonoBehaviour
         camera.Refresh();
         threadInputMat = camera.GetCurrentFrameAsMat();
         
-        if (threadResponseStateResult != null && threadInputMat != null)
+        if (threadResponseStateResult != null && threadInputMat != null && threadResponseStateResult.isValid)
         {
             for (int i = 0; i < threadResponseStateResult.ColCoords.Length; i++)
             {
@@ -115,7 +115,7 @@ public class BoardDetection : MonoBehaviour
         }
 
         ShowWinState(board.WinState);
-        if (board.WinState == WinState.MatchNotFinished)
+        if (board.WinState == WinState.MatchNotFinished && suggestedIndex >= 0)
         {
             ShowSuggestedPiece(suggestedIndex);
         }
@@ -207,6 +207,7 @@ public class BoardDetection : MonoBehaviour
                 else
                 {
                     // aktualisieren des States
+                    //board.State = FlipArrayHorizontal(result.State);
                     board.State = result.State;
 
                     if (gridStateHasChanged && result.isValid)
@@ -236,6 +237,34 @@ public class BoardDetection : MonoBehaviour
                 // -> ignore the exception since it is produced on purpose
             }
         }
+    }
+
+    public int[,] FlipArrayHorizontal(int[,] arrayToFlip)
+    {
+        //int rows = arrayToFlip.GetLength(0);
+        //int columns = arrayToFlip.GetLength(1);
+        //int[,] flippedArray = new int[rows, columns];
+
+        //for (int i = 0; i < columns; i++)
+        //{
+        //    for (int j = 0; j < rows; j++)
+        //    {
+        //        flippedArray[i, j] = arrayToFlip[i, (rows - 1) - j];
+        //    }
+        //}
+        //return flippedArray;
+        int rows = arrayToFlip.GetLength(0);
+        int columns = arrayToFlip.GetLength(1);       
+
+        int[,] flippedArray = new int[3, 2];
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < columns; j++)
+            {
+                flippedArray[rows - 1 - i, j] = arrayToFlip[i, j];
+            }
+        }
+        return flippedArray;
     }
 
     //  Quelle: https://stackoverflow.com/questions/12446770/how-to-compare-multidimensional-arrays-in-c-sharp user287107 Antwort 1
