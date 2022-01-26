@@ -8,8 +8,8 @@ public class StateDetection
     private int rows = 6;
     private int cols = 7;
 
-    private int id_red = 1;
-    private int id_yellow = -1;
+    public int id_red = 1;
+    public int id_yellow = -1;
 
     // color spaces
     // red

@@ -21,12 +21,21 @@ public class BoardDetection : MonoBehaviour
     private ObjectDetection objectDetection;
     private StateDetection stateDetection;
     private Board board;
-    private CustomCamera camera;
+    private new CustomCamera camera;
     private Thread cv2WorkerThread;
     private ConcurrentStack<Color32[]> stack = new ConcurrentStack<Color32[]>();
     private readonly object lockObj = new object();
     private Mat threadResponseMat;
     private Mat threadInputMat;
+
+    // Position Hover-Column
+    private float posX;
+    private float posY;
+
+    // WinStates
+    public GameObject YellowWon;
+    public GameObject RedWon;
+    public GameObject Draw;
 
     // Debug
     public bool debug;
@@ -44,6 +53,8 @@ public class BoardDetection : MonoBehaviour
         objectDetection = new ObjectDetection();
         stateDetection = new StateDetection();
         board = new Board();
+        board.redChip = stateDetection.id_red;
+        board.yellowChip = stateDetection.id_yellow;
         Agent.Board = board;
 
         Texture.allowThreadedTextureCreation = true;
@@ -75,6 +86,8 @@ public class BoardDetection : MonoBehaviour
         }
 
         stack.Clear();
+
+        ShowWinState(board.WinState);
         // ---
 
         stopwatch.Stop();
@@ -82,21 +95,6 @@ public class BoardDetection : MonoBehaviour
         {
             Debug.Log(stopwatch.ElapsedMilliseconds);
         }
-    }
-
-    private void printGrid(int[,] grid)
-    {
-        Debug.Log("#############");
-        string grid_str = "";
-        for (int i = 0; i < 7; i++)
-        {
-            for (int j = 0; j < 6; j++)
-            {
-                grid_str += grid[i, j] + "\t";
-            }
-            grid_str += "\n";
-        }
-        Debug.Log(grid_str);
     }
 
     void OnEnable()
@@ -183,6 +181,7 @@ public class BoardDetection : MonoBehaviour
                 if (gridStateHasChanged)
                 {
                     Agent.RequestDecision();
+                    board.UpdateWinstate();
                 }
 
                 // Was soll angezeigt werden
@@ -190,10 +189,10 @@ public class BoardDetection : MonoBehaviour
 
                 if (this.debug)
                 {
-                    printGrid(board.State);
+                    board.printGrid();
                 }
             }
-            catch (ThreadAbortException ex)
+            catch (ThreadAbortException)
             {
                 // This exception is thrown when calling Abort on the thread
                 // -> ignore the exception since it is produced on purpose
@@ -217,5 +216,34 @@ public class BoardDetection : MonoBehaviour
         );
 
         return !equal;
+    }
+
+    public void HoverColumn(int columnIndex)
+    {
+
+    }
+
+    public void ShowWinState(WinState winState)
+    {
+        RedWon.SetActive(false);
+        YellowWon.SetActive(false);
+        Draw.SetActive(false);
+
+        switch (winState)
+        {
+            case WinState.RedWin:
+                RedWon.SetActive(true);
+                break;
+            case WinState.YellowWin:
+                YellowWon.SetActive(true);
+                break;
+            case WinState.Draw:
+                Draw.SetActive(true);
+                break;
+            case WinState.MatchNotFinished:
+                break;
+            default:
+                break;
+        }
     }
 }

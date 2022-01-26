@@ -81,6 +81,7 @@ public class BoardEvaluator// : MonoBehaviour
         }
 
         // Es kann in keine Spalte ein Chip gelegt werden.
+        board.printGrid();
         return true;
     }
 
@@ -91,7 +92,7 @@ public class BoardEvaluator// : MonoBehaviour
     /// <returns></returns>
     public bool IsColumnAvailable(int index)
     {
-        if (board.State[index, board.Height - 1] == 0)
+        if (board.State[index, board.Height - 1] == board.emptyChip)
         {
             return true;
         }
@@ -481,7 +482,7 @@ public class BoardEvaluator// : MonoBehaviour
             )
         {
             // Prüfe Chips rechts oben davon
-            int otherChip = 1 == chip ? 2 : 1;
+            int otherChip = board.redChip == chip ? board.yellowChip : board.redChip;
             for (int i = 1; i < n; i++)
             {
                 bool isSameChip = board.State[column + i, row - i] == otherChip;
@@ -527,7 +528,7 @@ public class BoardEvaluator// : MonoBehaviour
             )
         {
             // Prüfe Chips rechts oben davon
-            int otherChip = 1 == chip ? 2 : 1;
+            int otherChip = board.redChip == chip ? board.yellowChip : board.redChip;
             for (int i = 1; i < n; i++)
             {
                 bool isSameChip = board.State[column - i, row - i] == otherChip;
@@ -548,7 +549,7 @@ public class BoardEvaluator// : MonoBehaviour
             )
         {
             // Prüfe Chips rechts davon
-            int otherChip = 1 == chip ? 2 : 1;
+            int otherChip = board.redChip == chip ? board.yellowChip : board.redChip;
             for (int i = 1; i < n; i++)
             {
                 bool isSameChip = board.State[column + i, row] == otherChip;
@@ -611,7 +612,7 @@ public class BoardEvaluator// : MonoBehaviour
             )
         {
             // Prüfe Chips links davon
-            int otherChip = 1 == chip ? 2 : 1;
+            int otherChip = board.redChip == chip ? board.yellowChip : board.redChip;
             for (int i = 1; i < n; i++)
             {
                 bool isSameChip = board.State[column - i, row] == otherChip;
@@ -652,7 +653,7 @@ public class BoardEvaluator// : MonoBehaviour
             )
         {
             // Prüfe Chips darunter
-            int otherChip = 1 == chip ? 2 : 1;
+            int otherChip = board.redChip == chip ? board.yellowChip : board.redChip;
             for (int i = 1; i < n; i++)
             {
                 bool isSameChip = board.State[column, row - i] == otherChip;

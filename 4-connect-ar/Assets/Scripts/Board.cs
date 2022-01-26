@@ -13,8 +13,10 @@ public enum WinState
 
 public enum Player
 {
+    //Red = 1,
+    //Yellow = 2
     Red = 1,
-    Yellow = 2
+    Yellow = -1
 }
 
 public class Board
@@ -29,11 +31,18 @@ public class Board
     // 0 0 0 2 0 0 0
     // 0 0 0 1 2 1 0
     public int[,] State { get; set; } // is empty, 1 is player1, 2 is player2
-
     public BoardEvaluator Evaluator { get; set; }
+    public WinState WinState { get; set; }
+
+    // Es muss ebenso public enum Player gesetzt werden ...
+    public int emptyChip = 0; // KOMMENTAR Ansehen!
+    public int redChip = 1; // KOMMENTAR Ansehen!
+    public int yellowChip = 2; // KOMMENTAR Ansehen!
 
     public Player CurrentPlayer = Player.Red;
     public Player StartingPlayer = Player.Red;
+    private BoardDetection boardDetection;
+    
 
     public Board()
     {
@@ -41,6 +50,16 @@ public class Board
         Height = 6;
         Evaluator = new BoardEvaluator(this);
         Reset();
+    }
+
+    public Board(BoardDetection boardDetection) : this()
+    {
+        this.boardDetection = boardDetection;
+    }
+
+    public void UpdateWinstate()
+    {
+        WinState = Evaluator.Evaluate();
     }
 
     public void Reset()
@@ -52,7 +71,7 @@ public class Board
     {
         for (int row = 0; row < Height; row++)
         {
-            if (State[column, row] == 0)
+            if (State[column, row] == emptyChip)
             {
                 return row;
             }
@@ -69,7 +88,8 @@ public class Board
     public void SelectColumn(int columnIndex, Player player)
     {
         // TODO: Hovereffekt über der Spalte anzeigen??
-        Debug.Log("Spalte: " + columnIndex);
+        Debug.Log(player + " says: Column " + columnIndex);
+        boardDetection?.HoverColumn(columnIndex);
         //throw new NotImplementedException();
     }
 
@@ -85,11 +105,11 @@ public class Board
 
         if (CurrentPlayer == Player.Red)
         {
-            State[column, row] = 1;
+            State[column, row] = redChip;
         }
         else
         {
-            State[column, row] = 2;
+            State[column, row] = yellowChip;
         }
 
         return row;
@@ -117,7 +137,7 @@ public class Board
         {
             for (int y = 0; y < Height; y++)
             {
-                int value = 0;
+                int value = emptyChip;
 
                 if (player == Player.Red)
                 {
@@ -125,13 +145,13 @@ public class Board
                 } 
                 else
                 {
-                    if (State[x, y] == 1)
+                    if (State[x, y] == redChip)
                     {
-                        value = 2;
+                        value = yellowChip;
                     }
-                    else if (State[x, y] == 2)
+                    else if (State[x, y] == yellowChip)
                     {
-                        value = 1;
+                        value = redChip;
                     }
                 }
 
@@ -156,5 +176,18 @@ public class Board
         return columns;
     }
 
-
+    public void printGrid()
+    {
+        Debug.Log("#############");
+        string grid_str = "";
+        for (int i = 0; i < 7; i++)
+        {
+            for (int j = 0; j < 6; j++)
+            {
+                grid_str += State[i, j] + "\t";
+            }
+            grid_str += "\n";
+        }
+        Debug.Log(grid_str);
+    }
 }

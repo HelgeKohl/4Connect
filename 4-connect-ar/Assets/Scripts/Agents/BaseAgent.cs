@@ -29,6 +29,7 @@ public class BaseAgent : Agent
     public override void OnEpisodeBegin()
     {
         Player = GetComponent<BehaviorParameters>().TeamId == 0 ? Player.Red : Player.Yellow;
+        Player = Player.Yellow;
     }
 
     /// <summary>
