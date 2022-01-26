@@ -24,9 +24,6 @@ public class StateDetection
     private OpenCvSharp.Scalar lower_blue;
     private OpenCvSharp.Scalar higher_blue;
 
-    // TODO
-    // Gültigkeit prüfen - ROT beginnt immer!
-    // Falscherkennung abfangen
     public StateDetection()
     {
         lower_red_1 = new OpenCvSharp.Scalar(0, 100, 50);
@@ -41,9 +38,6 @@ public class StateDetection
 
     public StateResult detectState(Mat frame)
     {
-        StateResult result = new StateResult();
-
-        int[,] grid;
         // Image Preprocessing
         Mat preproccessed = new Mat();
         imagePreprocessing(frame, out preproccessed);
@@ -57,18 +51,18 @@ public class StateDetection
 
         if (position_list.Count > 0)
         {
-            getState(rect_list, position_list, contour_list, frame, out grid, out int[] colCoords, out int[,][] holeCoords);
-
-            result.State = grid;
-            result.ColCoords = colCoords;
-            result.HoleCoords = holeCoords;
+            getState(rect_list, position_list, contour_list, frame, out StateResult result);
+            result.isValid = isValid(result);
+            return result;
         }
-
-        return result;
+        else
+        {
+            return new StateResult();
+        }
     }
 
     // imagepreprocessing for board detection
-    void imagePreprocessing(Mat FrameIn, out Mat FrameOut)
+    private void imagePreprocessing(Mat FrameIn, out Mat FrameOut)
     {
         // Frame in HSV-ColorSpace
         Mat hsv = new Mat();
@@ -113,7 +107,7 @@ public class StateDetection
     }
 
     // setup list of holes
-    void setupLists(Mat preproccessed, out List<Point[]> contour_list, out List<OpenCvSharp.Rect> rect_list, out List<int[]> position_list)
+    private void setupLists(Mat preproccessed, out List<Point[]> contour_list, out List<OpenCvSharp.Rect> rect_list, out List<int[]> position_list)
     {
         contour_list = new List<Point[]>();
         rect_list = new List<OpenCvSharp.Rect>();
@@ -163,9 +157,11 @@ public class StateDetection
     }
 
     // get current playstate
-    bool getState(List<OpenCvSharp.Rect> rect_list, List<int[]> position_list, List<Point[]> contour_list, Mat frame, out int[,] grid, out int[] colCoords, out int[,][] holeCoords)
+    private bool getState(List<OpenCvSharp.Rect> rect_list, List<int[]> position_list, List<Point[]> contour_list, Mat frame, out StateResult result)
     {
         // Frame in HSV-ColorSpace
+        result = new StateResult();
+
         Mat hsv = new Mat();
         Cv2.CvtColor(frame, hsv, ColorConversionCodes.BGR2HSV);
 
@@ -222,14 +218,10 @@ public class StateDetection
         Cv2.BitwiseAnd(frame, frame, img_yellow, mask_yellow);
         img_yellow.Dispose();
 
-        grid = new int[cols, rows];
-        colCoords = new int[7];
-        holeCoords = new int[cols, rows][];
-
         for (int x_i = 0; x_i < cols; x_i++)
         {
             int x = (int)(min_x + x_i * col_spacing);
-            colCoords[x_i] = x;
+            result.ColCoords[x_i] = x;
 
             for (int y_i = 0; y_i < rows; y_i++)
             {
@@ -247,14 +239,16 @@ public class StateDetection
 
                 if (Cv2.CountNonZero(img_res_red) > 0)
                 {
-                    grid[x_i, y_i] = id_red;
+                    result.State[x_i, y_i] = id_red;
+                    result.CountRedChips += 1;
                 }
                 else if (Cv2.CountNonZero(img_res_yellow) > 0)
                 {
-                    grid[x_i, y_i] = id_yellow;
+                    result.State[x_i, y_i] = id_yellow;
+                    result.CountYellowChips += 1;
                 }
 
-                holeCoords[x_i, y_i] = new int[]{ x, y };
+                result.HoleCoords[x_i, y_i] = new int[]{ x, y };
 
                 img_grid_circle.Dispose();
                 img_res_red.Dispose();
@@ -264,6 +258,29 @@ public class StateDetection
 
         mask_red.Dispose();
         mask_yellow.Dispose();
+
+        return true;
+    }
+
+    private bool isValid(StateResult result)
+    {
+        if(result.CountRedChips < result.CountYellowChips)
+        {
+            return false;
+        }
+
+        for(int i = 0; i < 7; i++)
+        {
+            bool chipFound = false;
+            for(int j = 0; j < 6; j++)
+            {
+                if(chipFound && result.State[i,j] == 0)
+                {
+                    return false;
+                }
+                chipFound = result.State[i, j] != 0;
+            }
+        }
 
         return true;
     }
