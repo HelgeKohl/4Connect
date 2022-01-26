@@ -3,6 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum BoardOperations
+{
+    Highlight,
+    CropInnerRegion,
+    CropOuterRegion
+}
 public class ObjectDetection
 {
     CascadeClassifier board_haar_cascade;
@@ -23,7 +29,7 @@ public class ObjectDetection
         board_haar_cascade = new CascadeClassifier(file);
     }
 
-    public Mat DetectObjects(Mat image)
+    public Mat DetectObjects(Mat image, BoardOperations operation = BoardOperations.CropOuterRegion)
     {
         if (image == null)
         {
@@ -48,12 +54,9 @@ public class ObjectDetection
         }
 
         // Mark the detected board on the original frame
-        MarkFeatures(image);
+        Mat result = MarkFeatures(image, operation);
 
-        //OpenCvHelper.Overlay = OpenCvSharp.Unity.MatToTexture(image);
-
-        //return OpenCvHelper.Overlay;
-        return image;
+        return result;
     }
 
     private Mat ConvertGrayScale(Mat image)
@@ -70,26 +73,55 @@ public class ObjectDetection
         return boardFeature;
     }
 
-    private void MarkFeatures(Mat image)
+    private Mat MarkFeatures(Mat image, BoardOperations operation)
     {
         foreach (OpenCvSharp.Rect bounds in boardBounds)
         {
+            // Scaling
             OpenCvSharp.Rect biggerRect = new OpenCvSharp.Rect();
-            double scaleXby = 1.6;
-            double scaleYby = 1.2;
+            double scaleXby = 1.8; // X-Faktor Skalierung
+            double scaleYby = 1.4; // Y-Faktor Skalierung
             biggerRect.X = bounds.X - (int)(bounds.Width * ((scaleXby - 1) / 2));
             biggerRect.Y = bounds.Y - (int)(bounds.Height * ((scaleYby - 1) / 2));
-            biggerRect.Width = (int)(bounds.Width * scaleXby);
-            biggerRect.Height = (int)(bounds.Height * scaleYby);
-
+            int scaledWith = (int)(bounds.Width * scaleXby);
+            int scaledHeight = (int)(bounds.Height * scaleYby);
             biggerRect.X = biggerRect.X < 0 ? 0 : biggerRect.X;
             biggerRect.Y = biggerRect.Y < 0 ? 0 : biggerRect.Y;
-            biggerRect.Width = biggerRect.X + biggerRect.Width > Screen.width ? Screen.width : biggerRect.Width;
-            biggerRect.Height = biggerRect.Y + biggerRect.Height > Screen.height ? Screen.height : biggerRect.Height;
+            bool isWidthAboveScreenWidth = biggerRect.X + scaledWith > image.Width;
+            bool isHeightAboveScreenHeight = biggerRect.Y + scaledHeight > image.Height;
+            int maxScreenWidth = image.Width - biggerRect.X;
+            int maxScreenHeight = image.Height - biggerRect.Y;
+            biggerRect.Width = isWidthAboveScreenWidth ? maxScreenWidth : scaledWith;
+            biggerRect.Height = isHeightAboveScreenHeight ? maxScreenHeight : scaledHeight;
 
-            Cv2.Rectangle(image, bounds, new Scalar(0, 255, 0), thickness: 5);
+            if (biggerRect.Width <= 0)
+            {
+                biggerRect.Width = scaledWith;
+            }
+            if (biggerRect.Height <= 0)
+            {
+                biggerRect.Height = scaledHeight;
+            }
 
-            Cv2.Rectangle(image, biggerRect, new Scalar(255, 255, 0), thickness: 5);
+            // Operation durchführen
+            if (operation == BoardOperations.Highlight)
+            {
+                // Tatsächlich gefundenes Rect
+                Cv2.Rectangle(image, bounds, new Scalar(0, 255, 0), thickness: 5);
+                // Rect mit Pufferzone
+                Cv2.Rectangle(image, biggerRect, new Scalar(255, 255, 0), thickness: 5);
+                return image;
+            }
+            else if (operation == BoardOperations.CropInnerRegion)
+            {
+                return new Mat(image, bounds);
+            }
+            else if (operation == BoardOperations.CropOuterRegion)
+            {
+                return new Mat(image, biggerRect);
+            }
         }
+
+        return null;
     }
 }

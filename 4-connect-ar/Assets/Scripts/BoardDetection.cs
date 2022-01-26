@@ -168,9 +168,11 @@ public class BoardDetection : MonoBehaviour
                     continue;
                 }
 
-                Mat matObjects = objectDetection.DetectObjects(threadInputMat);
+                BoardOperations regionSelectionOperation = BoardOperations.CropOuterRegion;
+                Mat boardRegion = objectDetection.DetectObjects(threadInputMat, regionSelectionOperation);
+
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
-                StateResult result = stateDetection.detectState(threadInputMat);
+                StateResult result = stateDetection.detectState(boardRegion == null || regionSelectionOperation == BoardOperations.Highlight ? threadInputMat : boardRegion);
 
                 // Prüfe ob State sich geändert hat
                 bool gridStateHasChanged = stateChanged(result.State, board.State);
@@ -180,12 +182,12 @@ public class BoardDetection : MonoBehaviour
 
                 if (gridStateHasChanged)
                 {
-                    Agent.RequestDecision();
-                    board.UpdateWinstate();
+                    //Agent.RequestDecision();
+                    //board.UpdateWinstate();
                 }
 
                 // Was soll angezeigt werden
-                threadResponseMat = matObjects;
+                threadResponseMat = boardRegion;
 
                 if (this.debug)
                 {
