@@ -180,11 +180,11 @@ public class Board
     {
         Debug.Log("#############");
         string grid_str = "";
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < 6; i++)
         {
-            for (int j = 0; j < 6; j++)
+            for (int j = 0; j < 7; j++)
             {
-                grid_str += State[i, j] + "\t";
+                grid_str += State[j, i] + "\t";
             }
             grid_str += "\n";
         }
