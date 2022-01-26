@@ -9,7 +9,7 @@ public class StateResult
 {
     public int[,] State { get; set; }
     public int[,][] HoleCoords { get; set; }
-    public int[] ColCoords { get; set; }
+    public int[][] ColCoords { get; set; }
     public int CountRedChips { get; set; }
     public int CountYellowChips { get; set; }
     public bool isValid { get; set; }

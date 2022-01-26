@@ -221,7 +221,6 @@ public class StateDetection
         for (int x_i = 0; x_i < cols; x_i++)
         {
             int x = (int)(min_x + x_i * col_spacing);
-            result.ColCoords[x_i] = x;
 
             for (int y_i = 0; y_i < rows; y_i++)
             {
@@ -254,7 +253,10 @@ public class StateDetection
                 img_res_red.Dispose();
                 img_res_yellow.Dispose();
             }
+
+            result.ColCoords[x_i] = new int[] { x, (result.HoleCoords[x_i, 0][1] - (int)mean_h)};
         }
+
 
         mask_red.Dispose();
         mask_yellow.Dispose();
