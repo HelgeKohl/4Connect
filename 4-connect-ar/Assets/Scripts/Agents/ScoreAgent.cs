@@ -69,6 +69,10 @@ public class ScoreAgent : BaseAgent
     public void SaveEnvironmentModel()
     {
         Model.State = Board.State.Clone() as int[,];
+        Model.CurrentPlayer = Board.CurrentPlayer;
+        Model.emptyChip = Board.emptyChip;
+        Model.redChip = Board.redChip;
+        Model.yellowChip = Board.yellowChip;
     }
 
     /// <summary>
