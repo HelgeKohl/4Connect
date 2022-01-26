@@ -1,0 +1,21 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+
+public class StateResult
+{
+    public int[,] State { get; set; }
+    public int[,][] HoleCoords { get; set; }
+    public int[] ColCoords { get; set; }
+
+    public StateResult()
+    {
+        State = new int[7, 6];
+        ColCoords = new int[7];
+    }
+}
+
+

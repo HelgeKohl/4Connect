@@ -170,13 +170,13 @@ public class BoardDetection : MonoBehaviour
 
                 Mat matObjects = objectDetection.DetectObjects(threadInputMat);
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
-                int[,] grid = stateDetection.detectState(threadInputMat);
-                
+                StateResult result = stateDetection.detectState(threadInputMat);
+
                 // Prüfe ob State sich geändert hat
-                bool gridStateHasChanged = stateChanged(grid, board.State);
+                bool gridStateHasChanged = stateChanged(result.State, board.State);
 
                 // aktualisieren des States
-                board.State = grid;
+                board.State = result.State;
 
                 if (gridStateHasChanged)
                 {

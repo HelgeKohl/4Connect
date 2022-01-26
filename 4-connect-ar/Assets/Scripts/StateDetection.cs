@@ -24,10 +24,9 @@ public class StateDetection
     private OpenCvSharp.Scalar lower_blue;
     private OpenCvSharp.Scalar higher_blue;
 
-    // TODO get Col Coords
+    // TODO
     // Gültigkeit prüfen - ROT beginnt immer!
     // Falscherkennung abfangen
-    // Coord einzelne Chips
     public StateDetection()
     {
         lower_red_1 = new OpenCvSharp.Scalar(0, 100, 50);
@@ -40,9 +39,11 @@ public class StateDetection
         higher_blue = new OpenCvSharp.Scalar(150, 255, 255);
     }
 
-    public int[,] detectState(Mat frame)
+    public StateResult detectState(Mat frame)
     {
-        int[,] grid = new int[cols, rows];
+        StateResult result = new StateResult();
+
+        int[,] grid;
         // Image Preprocessing
         Mat preproccessed = new Mat();
         imagePreprocessing(frame, out preproccessed);
@@ -56,10 +57,14 @@ public class StateDetection
 
         if (position_list.Count > 0)
         {
-            grid = getState(rect_list, position_list, contour_list, frame);
+            getState(rect_list, position_list, contour_list, frame, out grid, out int[] colCoords, out int[,][] holeCoords);
+
+            result.State = grid;
+            result.ColCoords = colCoords;
+            result.HoleCoords = holeCoords;
         }
 
-        return grid;
+        return result;
     }
 
     // imagepreprocessing for board detection
@@ -158,7 +163,7 @@ public class StateDetection
     }
 
     // get current playstate
-    int[,] getState(List<OpenCvSharp.Rect> rect_list, List<int[]> position_list, List<Point[]> contour_list, Mat frame)
+    bool getState(List<OpenCvSharp.Rect> rect_list, List<int[]> position_list, List<Point[]> contour_list, Mat frame, out int[,] grid, out int[] colCoords, out int[,][] holeCoords)
     {
         // Frame in HSV-ColorSpace
         Mat hsv = new Mat();
@@ -217,11 +222,15 @@ public class StateDetection
         Cv2.BitwiseAnd(frame, frame, img_yellow, mask_yellow);
         img_yellow.Dispose();
 
-        int[,] grid = new int[cols, rows];
-        
+        grid = new int[cols, rows];
+        colCoords = new int[7];
+        holeCoords = new int[cols, rows][];
+
         for (int x_i = 0; x_i < cols; x_i++)
         {
             int x = (int)(min_x + x_i * col_spacing);
+            colCoords[x_i] = x;
+
             for (int y_i = 0; y_i < rows; y_i++)
             {
                 int y = (int)(min_y + y_i * row_spacing);
@@ -245,6 +254,8 @@ public class StateDetection
                     grid[x_i, y_i] = id_yellow;
                 }
 
+                holeCoords[x_i, y_i] = new int[]{ x, y };
+
                 img_grid_circle.Dispose();
                 img_res_red.Dispose();
                 img_res_yellow.Dispose();
@@ -254,6 +265,6 @@ public class StateDetection
         mask_red.Dispose();
         mask_yellow.Dispose();
 
-        return grid;
+        return true;
     }
 }
