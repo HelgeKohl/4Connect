@@ -88,7 +88,7 @@ public class Board
     public void SelectColumn(int columnIndex, Player player)
     {
         Debug.Log(CurrentPlayer + " says: Column " + columnIndex);
-        boardDetection?.HoverColumn(columnIndex);
+        boardDetection?.SuggestColumn(columnIndex);
     }
 
     /// <summary>

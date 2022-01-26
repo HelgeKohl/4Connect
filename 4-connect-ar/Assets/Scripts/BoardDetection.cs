@@ -25,11 +25,15 @@ public class BoardDetection : MonoBehaviour
     private Thread cv2WorkerThread;
     private readonly object lockObj = new object();
     private Mat threadResponseMat;
+    private StateResult threadResponseStateResult;
     private Mat threadInputMat;
 
     // Position Hover-Column
+    public GameObject RedPiece;
+    public GameObject YellowPiece;
     private float posX;
     private float posY;
+    private int suggestedIndex;
 
     // WinStates
     public GameObject YellowWon;
@@ -51,7 +55,7 @@ public class BoardDetection : MonoBehaviour
         camera = new CustomCamera(background, Width, Height);
         objectDetection = new ObjectDetection();
         stateDetection = new StateDetection();
-        board = new Board();
+        board = new Board(this);
         board.redChip = stateDetection.id_red;
         board.yellowChip = stateDetection.id_yellow;
         board.UpdateWinstate();
@@ -59,6 +63,11 @@ public class BoardDetection : MonoBehaviour
 
 
         Texture.allowThreadedTextureCreation = true;
+    }
+
+    internal void SuggestColumn(int columnIndex)
+    {
+        this.suggestedIndex = columnIndex;
     }
 
     private void Update()
@@ -73,6 +82,31 @@ public class BoardDetection : MonoBehaviour
 
         camera.Refresh();
         threadInputMat = camera.GetCurrentFrameAsMat();
+        
+        if (threadResponseStateResult != null && threadInputMat != null)
+        {
+            for (int i = 0; i < threadResponseStateResult.ColCoords.Length; i++)
+            {
+                int[] item = threadResponseStateResult.ColCoords[i];
+                OpenCvSharp.Rect bounds = new OpenCvSharp.Rect();
+                bounds.X = item[0];
+                bounds.Y = item[1];
+                bounds.Width = 2;
+                bounds.Height = 2;
+                Scalar color;
+                if (i == suggestedIndex)
+                {
+                    color = new Scalar(0, 255, 0);
+                }
+                else
+                {
+                    color = new Scalar(255, 0, 0);
+                }
+                Cv2.Rectangle(threadInputMat, bounds, color, thickness: 5);
+                threadResponseMat = threadInputMat;
+            }
+        }
+
         TryAddCurrentMat();
 
         if (OpenCvHelper.Overlay != null)
@@ -81,6 +115,10 @@ public class BoardDetection : MonoBehaviour
         }
 
         ShowWinState(board.WinState);
+        if (board.WinState == WinState.MatchNotFinished)
+        {
+            ShowSuggestedPiece(suggestedIndex);
+        }
         // ---
 
         stopwatch.Stop();
@@ -110,18 +148,6 @@ public class BoardDetection : MonoBehaviour
         cv2WorkerThread = null;
     }
 
-    /// <summary>
-    /// Data struct to hold raw image data
-    /// </summary>
-    [StructLayout(LayoutKind.Explicit)]
-    private struct Color32Bytes
-    {
-        [FieldOffset(0)]
-        public byte[] byteArray;
-        [FieldOffset(0)]
-        public Color32[] colors;
-    }
-
     private void TryAddCurrentMat()
     {
         lock (lockObj)
@@ -131,18 +157,9 @@ public class BoardDetection : MonoBehaviour
                 return;
             }
 
-            Color32[] colors = GetColors(threadResponseMat);
-            threadResponseMat.Dispose();
+            OpenCvHelper.Overlay = OpenCvSharp.Unity.MatToTexture(threadResponseMat);
             threadResponseMat = null;
         }
-    }
-
-    private Color32[] GetColors(Mat mat)
-    {
-        OpenCvHelper.Overlay = OpenCvSharp.Unity.MatToTexture(mat);
-        Color32[] colors = OpenCvHelper.Overlay.GetPixels32();
-
-        return colors;
     }
 
     // Runs in a thread!
@@ -168,6 +185,17 @@ public class BoardDetection : MonoBehaviour
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
                 StateResult result = stateDetection.detectState(boardRegion == null || regionSelectionOperation == BoardOperations.Highlight ? threadInputMat : boardRegion);
 
+                int boardX = objectDetection.BoardRegionBounds.X;
+                int boardY = objectDetection.BoardRegionBounds.Y;
+
+                foreach (var item in result.ColCoords)
+                {
+                    item[0] += boardX;
+                    item[1] += boardY;
+                }
+
+                threadResponseStateResult = result;
+
                 // Prüfe ob State sich geändert hat
                 bool gridStateHasChanged = stateChanged(result.State, board.State);
 
@@ -180,26 +208,18 @@ public class BoardDetection : MonoBehaviour
                 {
                     // aktualisieren des States
                     board.State = result.State;
-                    
 
                     if (gridStateHasChanged && result.isValid)
                     {
                         board.CurrentPlayer = result.CountRedChips > result.CountYellowChips ? Player.Yellow : Player.Red;
-                        Agent.RequestDecision();
+                        if (result.CountRedChips + result.CountYellowChips < 42)
+                        {
+                            Agent.RequestDecision();
+                        } 
                         board.UpdateWinstate();
                     }
 
-                    foreach (int[] item in result.ColCoords)
-                    {
-                        OpenCvSharp.Rect bounds = new OpenCvSharp.Rect();
-                        bounds.X = item[0];
-                        bounds.Y = item[1];
-                        bounds.Width = 1;
-                        bounds.Height = 1;
-                        Cv2.Rectangle(boardRegion, bounds, new Scalar(0, 255, 0), thickness: 5);
-                    }
-
-                    threadResponseMat = boardRegion;
+                    //threadResponseMat = boardRegion;
                 }
 
                 // Was soll angezeigt werden
@@ -236,9 +256,21 @@ public class BoardDetection : MonoBehaviour
         return !equal;
     }
 
-    public void HoverColumn(int columnIndex)
+    public void ShowSuggestedPiece(int columnIndex)
     {
+        RedPiece.SetActive(false);
+        YellowPiece.SetActive(false);
+        if (threadResponseStateResult != null && threadResponseStateResult.isValid)
+        {
+            int[] coordinates = threadResponseStateResult.ColCoords[columnIndex];
+            int x = coordinates[0];
+            int y = coordinates[1];
 
+            GameObject piece = board.CurrentPlayer == Player.Red ? RedPiece : YellowPiece;
+            piece.SetActive(true);
+
+            piece.transform.localPosition = new Vector3(x, y);
+        }
     }
 
     public void ShowWinState(WinState winState)

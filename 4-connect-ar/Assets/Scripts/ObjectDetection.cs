@@ -13,6 +13,7 @@ public class ObjectDetection
 {
     CascadeClassifier board_haar_cascade;
     List<OpenCvSharp.Rect> boardBounds = new List<OpenCvSharp.Rect>();
+    public OpenCvSharp.Rect BoardRegionBounds;
 
     public ObjectDetection()
     {
@@ -110,14 +111,18 @@ public class ObjectDetection
                 Cv2.Rectangle(image, bounds, new Scalar(0, 255, 0), thickness: 5);
                 // Rect mit Pufferzone
                 Cv2.Rectangle(image, biggerRect, new Scalar(255, 255, 0), thickness: 5);
+
+                BoardRegionBounds = image.BoundingRect();
                 return image;
             }
             else if (operation == BoardOperations.CropInnerRegion)
             {
+                BoardRegionBounds = bounds;
                 return new Mat(image, bounds);
             }
             else if (operation == BoardOperations.CropOuterRegion)
             {
+                BoardRegionBounds = biggerRect;
                 return new Mat(image, biggerRect);
             }
         }
