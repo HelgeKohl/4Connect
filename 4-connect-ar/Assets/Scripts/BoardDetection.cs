@@ -23,7 +23,6 @@ public class BoardDetection : MonoBehaviour
     private Board board;
     private new CustomCamera camera;
     private Thread cv2WorkerThread;
-    private ConcurrentStack<Color32[]> stack = new ConcurrentStack<Color32[]>();
     private readonly object lockObj = new object();
     private Mat threadResponseMat;
     private Mat threadInputMat;
@@ -55,7 +54,9 @@ public class BoardDetection : MonoBehaviour
         board = new Board();
         board.redChip = stateDetection.id_red;
         board.yellowChip = stateDetection.id_yellow;
+        board.UpdateWinstate();
         Agent.Board = board;
+
 
         Texture.allowThreadedTextureCreation = true;
     }
@@ -74,18 +75,10 @@ public class BoardDetection : MonoBehaviour
         threadInputMat = camera.GetCurrentFrameAsMat();
         TryAddCurrentMat();
 
-        // here in the main thread work the stack
-        if (stack.TryPop(out var pixels32))
+        if (OpenCvHelper.Overlay != null)
         {
-            // Only use SetPixels and Apply when really needed
-            //Texture2D texture2D = background.texture as Texture2D;
-            if (OpenCvHelper.Overlay != null)
-            {
-                background.texture = OpenCvHelper.Overlay;
-            }
+            background.texture = OpenCvHelper.Overlay;
         }
-
-        stack.Clear();
 
         ShowWinState(board.WinState);
         // ---
@@ -99,8 +92,6 @@ public class BoardDetection : MonoBehaviour
 
     void OnEnable()
     {
-        stack.Clear();
-
         if (cv2WorkerThread != null)
         {
             cv2WorkerThread.Abort();
@@ -142,8 +133,6 @@ public class BoardDetection : MonoBehaviour
 
             Color32[] colors = GetColors(threadResponseMat);
             threadResponseMat.Dispose();
-            stack.Push(colors);
-
             threadResponseMat = null;
         }
     }
@@ -171,23 +160,37 @@ public class BoardDetection : MonoBehaviour
                 BoardOperations regionSelectionOperation = BoardOperations.CropOuterRegion;
                 Mat boardRegion = objectDetection.DetectObjects(threadInputMat, regionSelectionOperation);
 
+                if (boardRegion == null)
+                {
+                    continue;
+                }
+
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
                 StateResult result = stateDetection.detectState(boardRegion == null || regionSelectionOperation == BoardOperations.Highlight ? threadInputMat : boardRegion);
 
                 // Prüfe ob State sich geändert hat
                 bool gridStateHasChanged = stateChanged(result.State, board.State);
 
-                // aktualisieren des States
-                board.State = result.State;
-
-                if (gridStateHasChanged)
+                if (!result.isValid)
                 {
-                    //Agent.RequestDecision();
+                    //board.Reset();
                     //board.UpdateWinstate();
+                }
+                else
+                {
+                    // aktualisieren des States
+                    board.State = result.State;
+
+                    if (gridStateHasChanged && result.isValid)
+                    {
+                        board.CurrentPlayer = result.CountRedChips > result.CountYellowChips ? Player.Yellow : Player.Red;
+                        Agent.RequestDecision();
+                        board.UpdateWinstate();
+                    }
                 }
 
                 // Was soll angezeigt werden
-                threadResponseMat = boardRegion;
+                //threadResponseMat = boardRegion;
 
                 if (this.debug)
                 {

@@ -264,7 +264,15 @@ public class StateDetection
 
     private bool isValid(StateResult result)
     {
-        if(result.CountRedChips < result.CountYellowChips)
+        bool countDifferenceIsValid = false;
+        if(result.CountRedChips == result.CountYellowChips ||  // Gleiche Anzahl
+           result.CountRedChips == result.CountYellowChips + 1 // Der Rote hat einen Chip mehr, er ist Startspieler
+           )
+        {
+            countDifferenceIsValid = true;
+        }
+
+        if (!countDifferenceIsValid)
         {
             return false;
         }

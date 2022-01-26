@@ -87,10 +87,8 @@ public class Board
     /// <param name="player">Welcher Spieler es ist</param>
     public void SelectColumn(int columnIndex, Player player)
     {
-        // TODO: Hovereffekt über der Spalte anzeigen??
-        Debug.Log(player + " says: Column " + columnIndex);
+        Debug.Log(CurrentPlayer + " says: Column " + columnIndex);
         boardDetection?.HoverColumn(columnIndex);
-        //throw new NotImplementedException();
     }
 
     /// <summary>

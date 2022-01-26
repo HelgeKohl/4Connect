@@ -308,7 +308,7 @@ public class BoardEvaluator// : MonoBehaviour
         else if (winState == WinState.RedWin && board.CurrentPlayer == Player.Yellow
             || winState == WinState.YellowWin && board.CurrentPlayer == Player.Red)
         {
-            throw new Exception("Durch das einwerfen eines Chips sollte der andere Spieler nie gewinnen ...");
+            //throw new Exception("Durch das einwerfen eines Chips sollte der andere Spieler nie gewinnen ...");
         }
 
         return reward;
