@@ -235,23 +235,23 @@ public class StateDetection
 
                 if (Cv2.CountNonZero(img_res_red) > 0)
                 {
-                    result.State[x_i, y_i] = id_red;
+                    result.State[x_i, rows - y_i - 1] = id_red;
                     result.CountRedChips += 1;
                 }
                 else if (Cv2.CountNonZero(img_res_yellow) > 0)
                 {
-                    result.State[x_i, y_i] = id_yellow;
+                    result.State[x_i, rows - y_i - 1] = id_yellow;
                     result.CountYellowChips += 1;
                 }
 
-                result.HoleCoords[x_i, y_i] = new int[]{ x, y };
+                result.HoleCoords[x_i, rows - y_i - 1] = new int[]{ x, y };
 
                 img_grid_circle.Dispose();
                 img_res_red.Dispose();
                 img_res_yellow.Dispose();
             }
 
-            result.ColCoords[x_i] = new int[] { x, (result.HoleCoords[x_i, 0][1] - (int)mean_h * 2)};
+            result.ColCoords[x_i] = new int[] { x, (result.HoleCoords[x_i, 5][1] - (int)mean_h * 2)};
         }
 
 
@@ -281,11 +281,11 @@ public class StateDetection
             bool chipFound = false;
             for(int j = 0; j < 6; j++)
             {
-                if(chipFound && result.State[i,j] == 0)
+                if(chipFound && result.State[i,j] != 0)
                 {
                     return false;
                 }
-                chipFound = result.State[i, j] != 0;
+                chipFound = result.State[i, j] == 0;
             }
         }
 
