@@ -174,6 +174,8 @@ public class StateDetection
         mean_w = mean_w / rect_list.Count;
         mean_h = mean_h / rect_list.Count;
 
+        result.MeanChipSize = (int) mean_w;
+
         position_list.Sort((x, y) => x[0].CompareTo(y[0]));
 
         int max_x = position_list[position_list.Count - 1][0];

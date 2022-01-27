@@ -13,6 +13,7 @@ public class StateResult
     public int CountRedChips { get; set; }
     public int CountYellowChips { get; set; }
     public bool isValid { get; set; }
+    public int MeanChipSize { get; set; }
 
     public StateResult()
     {
@@ -21,6 +22,7 @@ public class StateResult
         HoleCoords = new int[7, 6][];
         CountRedChips = 0;
         CountYellowChips = 0;
+        MeanChipSize = 0;
     }
 }
 

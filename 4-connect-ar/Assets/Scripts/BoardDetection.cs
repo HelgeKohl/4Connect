@@ -30,7 +30,8 @@ public class BoardDetection : MonoBehaviour
     private Mat threadInputMat;
 
     // Chip Image
-    private Mat chipImage;
+    private Mat chipImageRed;
+    private Mat chipImageYellow;
 
     // Position Hover-Column
     public GameObject RedPiece;
@@ -69,40 +70,13 @@ public class BoardDetection : MonoBehaviour
         Texture.allowThreadedTextureCreation = true;
 
 
-        //Texture2D texture = RedPiece.GetComponent<Image>().sprite.texture;
-        Texture2D texture = RedPiece.GetComponent<Image>().mainTexture as Texture2D;
-
-        Debug.Log(texture.GetPixel(0, 0).a);
-        Debug.Log(texture.GetPixel(100, 100).a);
-
-        //Debug.Log(texture.alphaIsTransparency);
-        Mat imagedLoaded = OpenCvSharp.Unity.TextureToMat(texture);
-        Debug.Log(imagedLoaded.Channels());
-
-        
-
-        //Debug.Log(imagedLoaded.At<Vec3b>(0, 0).Item0 + " " + imagedLoaded.At<Vec3b>(0, 0).Item1 + " " + imagedLoaded.At<Vec3b>(0, 0).Item2);
-        //Debug.Log("imagedLoaded " + imagedLoaded.Width + " - " + imagedLoaded.Height);
-
-        //Mat emptyChipImage = Mat.Zeros(new Size(imagedLoaded.Width, imagedLoaded.Height), MatType.CV_8UC1);
-        //Debug.Log("emptyChipImage " + emptyChipImage.Width + " - " + emptyChipImage.Height);
-
-        //chipImage = new Mat();
-        //Cv2.BitwiseAnd(emptyChipImage, emptyChipImage, chipImage, imagedLoaded);
-        
-
-        chipImage = imagedLoaded;
-
-        //new Mat()
-
-        //Mat.Zeros(new Size(frame.Width, frame.Height), MatType.CV_8UC1);
-        Cv2.Resize(chipImage, chipImage, new Size(64, 64));
-
-        // B G R
-        // 4 3 141
-        //Debug.Log(chipImage.At<Vec3b>(0, 0).Item0 + " " + chipImage.At<Vec3b>(0, 0).Item1 + " " + chipImage.At<Vec3b>(0, 0).Item2);
-
-        Debug.Log(chipImage.Size());
+        // Chips zum Einwerfen
+        Texture2D textureRed = RedPiece.GetComponent<Image>().mainTexture as Texture2D;
+        Texture2D textureYellow = YellowPiece.GetComponent<Image>().mainTexture as Texture2D;
+        chipImageRed = OpenCvSharp.Unity.TextureToMat(textureRed);
+        chipImageYellow = OpenCvSharp.Unity.TextureToMat(textureYellow);
+        Cv2.Resize(chipImageRed, chipImageRed, new Size(64, 64));
+        Cv2.Resize(chipImageYellow, chipImageYellow, new Size(64, 64));
     }
 
     internal void SuggestColumn(int columnIndex)
@@ -137,14 +111,19 @@ public class BoardDetection : MonoBehaviour
                 {
                     color = new Scalar(0, 255, 0);
 
-                    int posX = bounds.X - chipImage.Width / 2;
-                    int posY = bounds.Y - chipImage.Height / 2;
-                    int width = posX + chipImage.Width;
-                    int height = posY + chipImage.Height;
+                    Mat chipImage = board.CurrentPlayer == Player.Red ? chipImageRed : chipImageYellow;
+                    int desiredLength = threadResponseStateResult.MeanChipSize;
+                    Mat resizedChip = new Mat();
+                    Cv2.Resize(chipImage, resizedChip, new Size(desiredLength, desiredLength));
+
+                    int posX = bounds.X - resizedChip.Width / 2;
+                    int posY = bounds.Y - resizedChip.Height / 2;
+                    int width = posX + resizedChip.Width;
+                    int height = posY + resizedChip.Height;
                     
                     // Stelle Chip an richtiger Position dar, Größe wie Original
                     Mat chip_only = Mat.Zeros(new Size(threadInputMat.Width, threadInputMat.Height), MatType.CV_8UC3);
-                    chipImage.CopyTo(chip_only.ColRange(posX, width).RowRange(posY, height));
+                    resizedChip.CopyTo(chip_only.ColRange(posX, width).RowRange(posY, height));
 
                     // Grayscale zum Thresholdne
                     Mat chip_grayscale = new Mat();
@@ -152,7 +131,7 @@ public class BoardDetection : MonoBehaviour
 
                     // erstellen der Chip Maske
                     Mat chip_mask = new Mat();
-                    Cv2.Threshold(chip_grayscale, chip_mask, 10, 255, ThresholdTypes.Binary);
+                    Cv2.Threshold(chip_grayscale, chip_mask, 42, 255, ThresholdTypes.Binary);
                     chip_grayscale.Dispose();
 
                     Cv2.CvtColor(chip_mask, chip_mask, ColorConversionCodes.GRAY2BGR);
