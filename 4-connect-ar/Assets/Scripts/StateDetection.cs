@@ -26,14 +26,14 @@ public class StateDetection
 
     public StateDetection()
     {
-        lower_red_1 = new OpenCvSharp.Scalar(0, 100, 50);
+        lower_red_1 = new OpenCvSharp.Scalar(0, 175, 50);
         higher_red_1 = new OpenCvSharp.Scalar(10, 255, 255);
-        lower_red_2 = new OpenCvSharp.Scalar(170, 100, 50);
+        lower_red_2 = new OpenCvSharp.Scalar(170, 175, 50);
         higher_red_2 = new OpenCvSharp.Scalar(180, 255, 255);
-        lower_yellow = new OpenCvSharp.Scalar(15, 100, 20);
+        lower_yellow = new OpenCvSharp.Scalar(15, 125, 20);
         higher_yellow = new OpenCvSharp.Scalar(45, 255, 255);
-        lower_blue = new OpenCvSharp.Scalar(90, 30, 30);
-        higher_blue = new OpenCvSharp.Scalar(150, 255, 255);
+        lower_blue = new OpenCvSharp.Scalar(100, 100, 20);
+        higher_blue = new OpenCvSharp.Scalar(140, 255, 255);
     }
 
     public StateResult detectState(Mat frame)
@@ -77,33 +77,30 @@ public class StateDetection
         Cv2.BitwiseAnd(FrameIn, FrameIn, board_only, blue_mask);
         blue_mask.Dispose();
 
-        // TODO: Wird benötigt?
-        // Performance!
-        //
-        // apply bilateral_filter
-        //Mat bilateral_filter = new Mat();
-        //Cv2.BilateralFilter(board_only, bilateral_filter, 9, 175, 175);
-        //board_only.Dispose();
-
-        Mat bilateral_filter = board_only;
-
         // convert to grayscale
-        Cv2.CvtColor(bilateral_filter, bilateral_filter, ColorConversionCodes.BGR2GRAY);
+        Mat board_only_gray = new Mat();
+        Cv2.CvtColor(board_only, board_only_gray, ColorConversionCodes.BGR2GRAY);
+        board_only.Dispose();
+
+        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
+        Mat dilated = new Mat();
+        Cv2.Dilate(board_only_gray, dilated, kernel, null, 1);
+        board_only_gray.Dispose();
+
+        Mat eroded = new Mat();
+        Cv2.Erode(dilated, eroded, kernel, null, 3);
+        dilated.Dispose();
 
         // threshold grayscale
-        Cv2.Threshold(bilateral_filter, bilateral_filter, 10, 255, ThresholdTypes.Binary);
-
-        // dilate threshold
-        Mat dilated = new Mat();
-        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
-        Cv2.Dilate(bilateral_filter, dilated, kernel, null, 1);
-        bilateral_filter.Dispose();
+        Mat thresh = new Mat();
+        Cv2.Threshold(eroded, thresh, 10, 255, ThresholdTypes.Binary);
+        eroded.Dispose();
         kernel.Dispose();
 
         // canny edge detection
         FrameOut = new Mat();
-        Cv2.Canny(dilated, FrameOut, 175, 200);
-        dilated.Dispose();
+        Cv2.Canny(thresh, FrameOut, 175, 200);
+        thresh.Dispose();
     }
 
     // setup list of holes
@@ -139,12 +136,12 @@ public class StateDetection
 
             // check if contour is a really a hole
             if (
-                approx.Length >= 8 &&
+                approx.Length >= 6 &&
                 approx.Length <= 20 &&
-                area > 200 &&
+                area > 250 &&
                 area_rect < ((preproccessed.Width * preproccessed.Height) / 5) &&
-                w_rect >= (h_rect - 20) &&
-                w_rect <= (h_rect + 20)
+                w_rect >= (h_rect - 15) &&
+                w_rect <= (h_rect + 15)
             )
             {
                 // add hole data 
