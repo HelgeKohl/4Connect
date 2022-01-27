@@ -252,12 +252,16 @@ public class BoardDetection : MonoBehaviour
                 int boardX = objectDetection.BoardRegionBounds.X;
                 int boardY = objectDetection.BoardRegionBounds.Y;
 
-                foreach (var item in result.ColCoords)
+                Debug.LogWarning(result.isValid);
+                if (result.isValid)
                 {
-                    if(item != null && item.Length == 2)
+                    foreach (var item in result.ColCoords)
                     {
-                        item[0] += boardX;
-                        item[1] += boardY;
+                        //if(item != null && item.Length == 2)
+                        //{
+                            item[0] += boardX;
+                            item[1] += boardY;
+                        //}
                     }
                 }
 

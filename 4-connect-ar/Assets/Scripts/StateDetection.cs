@@ -57,7 +57,9 @@ public class StateDetection
         }
         else
         {
-            return new StateResult();
+            StateResult result = new StateResult();
+            result.isValid = false;
+            return result;
         }
     }
 
