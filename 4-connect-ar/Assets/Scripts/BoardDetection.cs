@@ -72,12 +72,12 @@ public class BoardDetection : MonoBehaviour
         //Texture2D texture = RedPiece.GetComponent<Image>().sprite.texture;
         Texture2D texture = RedPiece.GetComponent<Image>().mainTexture as Texture2D;
 
-
         Debug.Log(texture.GetPixel(0, 0).a);
         Debug.Log(texture.GetPixel(100, 100).a);
 
         //Debug.Log(texture.alphaIsTransparency);
         Mat imagedLoaded = OpenCvSharp.Unity.TextureToMat(texture);
+        Debug.Log(imagedLoaded.Channels());
 
         
 
@@ -137,13 +137,33 @@ public class BoardDetection : MonoBehaviour
                 {
                     color = new Scalar(0, 255, 0);
 
-                    //chipImage.CopyTo(threadInputMat.RowRange(0, 63).ColRange(0, 63));
                     int posX = bounds.X - chipImage.Width / 2;
                     int posY = bounds.Y - chipImage.Height / 2;
                     int width = posX + chipImage.Width;
                     int height = posY + chipImage.Height;
                     
-                    chipImage.CopyTo(threadInputMat.ColRange(posX, width).RowRange(posY, height));
+                    // Stelle Chip an richtiger Position dar, Größe wie Original
+                    Mat chip_only = Mat.Zeros(new Size(threadInputMat.Width, threadInputMat.Height), MatType.CV_8UC3);
+                    chipImage.CopyTo(chip_only.ColRange(posX, width).RowRange(posY, height));
+
+                    // Grayscale zum Thresholdne
+                    Mat chip_grayscale = new Mat();
+                    Cv2.CvtColor(chip_only, chip_grayscale, ColorConversionCodes.BGR2GRAY);
+
+                    // erstellen der Chip Maske
+                    Mat chip_mask = new Mat();
+                    Cv2.Threshold(chip_grayscale, chip_mask, 10, 255, ThresholdTypes.Binary);
+                    chip_grayscale.Dispose();
+
+                    Cv2.CvtColor(chip_mask, chip_mask, ColorConversionCodes.GRAY2BGR);
+
+                    // Setze Pixel an der Stelle, an der der Chip ist, auf schwarz
+                    threadInputMat = threadInputMat - chip_mask;
+                    chip_mask.Dispose();
+
+                    // Füge Chip ein
+                    threadInputMat = threadInputMat + chip_only;
+                    chip_only.Dispose();
                 }
                 else
                 {
