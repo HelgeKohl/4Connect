@@ -116,14 +116,19 @@ public class BoardDetection : MonoBehaviour
                     Mat resizedChip = new Mat();
                     Cv2.Resize(chipImage, resizedChip, new Size(desiredLength, desiredLength));
 
-                    int posX = bounds.X - resizedChip.Width / 2;
-                    int posY = bounds.Y - resizedChip.Height / 2;
-                    int width = posX + resizedChip.Width;
-                    int height = posY + resizedChip.Height;
+                    int leftPosX = bounds.X - resizedChip.Width / 2;
+                    int topPosY = bounds.Y - resizedChip.Height / 2;
+                    int rightPosX = leftPosX + resizedChip.Width;
+                    int BottomPosY = topPosY + resizedChip.Height;
+
+                    if(leftPosX < 0 || topPosY < 0 || leftPosX > threadInputMat.Width || topPosY > threadInputMat.Height)
+                    {
+                        continue;
+                    }
                     
                     // Stelle Chip an richtiger Position dar, Größe wie Original
                     Mat chip_only = Mat.Zeros(new Size(threadInputMat.Width, threadInputMat.Height), MatType.CV_8UC3);
-                    resizedChip.CopyTo(chip_only.ColRange(posX, width).RowRange(posY, height));
+                    resizedChip.CopyTo(chip_only.ColRange(leftPosX, rightPosX).RowRange(topPosY, BottomPosY));
 
                     // Grayscale zum Thresholdne
                     Mat chip_grayscale = new Mat();
@@ -131,7 +136,7 @@ public class BoardDetection : MonoBehaviour
 
                     // erstellen der Chip Maske
                     Mat chip_mask = new Mat();
-                    Cv2.Threshold(chip_grayscale, chip_mask, 42, 255, ThresholdTypes.Binary);
+                    Cv2.Threshold(chip_grayscale, chip_mask, 5, 255, ThresholdTypes.Binary);
                     chip_grayscale.Dispose();
 
                     Cv2.CvtColor(chip_mask, chip_mask, ColorConversionCodes.GRAY2BGR);
@@ -143,14 +148,17 @@ public class BoardDetection : MonoBehaviour
                     // Füge Chip ein
                     threadInputMat = threadInputMat + chip_only;
                     chip_only.Dispose();
+                    Scalar border_color = board.CurrentPlayer == Player.Red ? new Scalar(4, 4, 143) : new Scalar(74, 255, 251);
+                    Cv2.Circle(threadInputMat, bounds.X, bounds.Y, resizedChip.Width/2, border_color, 2);
+                    resizedChip.Dispose();
                 }
                 else
                 {
                     color = new Scalar(255, 0, 0);
+                    Cv2.Rectangle(threadInputMat, bounds, color, thickness: 5);
                 }
 
                 
-                Cv2.Rectangle(threadInputMat, bounds, color, thickness: 5);
                 threadResponseMat = threadInputMat;
             }
         }
@@ -246,8 +254,11 @@ public class BoardDetection : MonoBehaviour
 
                 foreach (var item in result.ColCoords)
                 {
-                    item[0] += boardX;
-                    item[1] += boardY;
+                    if(item != null && item.Length == 2)
+                    {
+                        item[0] += boardX;
+                        item[1] += boardY;
+                    }
                 }
 
                 threadResponseStateResult = result;
