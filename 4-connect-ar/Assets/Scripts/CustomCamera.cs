@@ -50,6 +50,11 @@ public class CustomCamera
         canvas.rectTransform.localEulerAngles = new Vector3(0, 0, orient);
     }
 
+    public RectTransform GetAspectRatio()
+    {
+        return canvas.rectTransform;
+    }
+
     public bool IsCameraAvailable()
     {
         return isCameraAvailable;

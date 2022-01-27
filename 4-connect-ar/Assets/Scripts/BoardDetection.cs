@@ -17,6 +17,7 @@ public class BoardDetection : MonoBehaviour
     public int Width = 640;
     public int Height = 480;
     public BaseAgent Agent;
+    public RectTransform CanvasRectTransform;
 
     private ObjectDetection objectDetection;
     private StateDetection stateDetection;
@@ -27,6 +28,9 @@ public class BoardDetection : MonoBehaviour
     private Mat threadResponseMat;
     private StateResult threadResponseStateResult;
     private Mat threadInputMat;
+
+    // Chip Image
+    private Mat chipImage;
 
     // Position Hover-Column
     public GameObject RedPiece;
@@ -63,16 +67,47 @@ public class BoardDetection : MonoBehaviour
 
 
         Texture.allowThreadedTextureCreation = true;
+
+
+        //Texture2D texture = RedPiece.GetComponent<Image>().sprite.texture;
+        Texture2D texture = RedPiece.GetComponent<Image>().mainTexture as Texture2D;
+
+
+        Debug.Log(texture.GetPixel(0, 0).a);
+        Debug.Log(texture.GetPixel(100, 100).a);
+
+        //Debug.Log(texture.alphaIsTransparency);
+        Mat imagedLoaded = OpenCvSharp.Unity.TextureToMat(texture);
+
+        
+
+        //Debug.Log(imagedLoaded.At<Vec3b>(0, 0).Item0 + " " + imagedLoaded.At<Vec3b>(0, 0).Item1 + " " + imagedLoaded.At<Vec3b>(0, 0).Item2);
+        //Debug.Log("imagedLoaded " + imagedLoaded.Width + " - " + imagedLoaded.Height);
+
+        //Mat emptyChipImage = Mat.Zeros(new Size(imagedLoaded.Width, imagedLoaded.Height), MatType.CV_8UC1);
+        //Debug.Log("emptyChipImage " + emptyChipImage.Width + " - " + emptyChipImage.Height);
+
+        //chipImage = new Mat();
+        //Cv2.BitwiseAnd(emptyChipImage, emptyChipImage, chipImage, imagedLoaded);
+        
+
+        chipImage = imagedLoaded;
+
+        //new Mat()
+
+        //Mat.Zeros(new Size(frame.Width, frame.Height), MatType.CV_8UC1);
+        Cv2.Resize(chipImage, chipImage, new Size(64, 64));
+
+        // B G R
+        // 4 3 141
+        //Debug.Log(chipImage.At<Vec3b>(0, 0).Item0 + " " + chipImage.At<Vec3b>(0, 0).Item1 + " " + chipImage.At<Vec3b>(0, 0).Item2);
+
+        Debug.Log(chipImage.Size());
     }
 
     internal void SuggestColumn(int columnIndex)
     {
         this.suggestedIndex = columnIndex;
-    }
-
-    private void Update()
-    {
-
     }
 
     private void FixedUpdate()
@@ -82,6 +117,7 @@ public class BoardDetection : MonoBehaviour
 
         camera.Refresh();
         threadInputMat = camera.GetCurrentFrameAsMat();
+
         
         if (threadResponseStateResult != null && threadInputMat != null && threadResponseStateResult.isValid)
         {
@@ -91,20 +127,40 @@ public class BoardDetection : MonoBehaviour
                 OpenCvSharp.Rect bounds = new OpenCvSharp.Rect();
                 bounds.X = item[0];
                 bounds.Y = item[1];
+
+                
+
                 bounds.Width = 2;
                 bounds.Height = 2;
                 Scalar color;
                 if (i == suggestedIndex)
                 {
                     color = new Scalar(0, 255, 0);
+
+                    //chipImage.CopyTo(threadInputMat.RowRange(0, 63).ColRange(0, 63));
+                    int posX = bounds.X - chipImage.Width / 2;
+                    int posY = bounds.Y - chipImage.Height / 2;
+                    int width = posX + chipImage.Width;
+                    int height = posY + chipImage.Height;
+                    
+                    chipImage.CopyTo(threadInputMat.ColRange(posX, width).RowRange(posY, height));
                 }
                 else
                 {
                     color = new Scalar(255, 0, 0);
                 }
+
+                
                 Cv2.Rectangle(threadInputMat, bounds, color, thickness: 5);
                 threadResponseMat = threadInputMat;
             }
+        }
+
+        if (threadInputMat != null)
+        {
+            //Debug.Log("Do");
+            //chipImage.CopyTo(threadInputMat.RowRange(0, 63).ColRange(0, 63));
+            
         }
 
         TryAddCurrentMat();
@@ -115,6 +171,7 @@ public class BoardDetection : MonoBehaviour
         }
 
         ShowWinState(board.WinState);
+        ShowSuggestedPiece(suggestedIndex);
         if (board.WinState == WinState.MatchNotFinished && suggestedIndex >= 0)
         {
             ShowSuggestedPiece(suggestedIndex);
@@ -239,34 +296,6 @@ public class BoardDetection : MonoBehaviour
         }
     }
 
-    public int[,] FlipArrayHorizontal(int[,] arrayToFlip)
-    {
-        //int rows = arrayToFlip.GetLength(0);
-        //int columns = arrayToFlip.GetLength(1);
-        //int[,] flippedArray = new int[rows, columns];
-
-        //for (int i = 0; i < columns; i++)
-        //{
-        //    for (int j = 0; j < rows; j++)
-        //    {
-        //        flippedArray[i, j] = arrayToFlip[i, (rows - 1) - j];
-        //    }
-        //}
-        //return flippedArray;
-        int rows = arrayToFlip.GetLength(0);
-        int columns = arrayToFlip.GetLength(1);       
-
-        int[,] flippedArray = new int[3, 2];
-        for (int i = 0; i < rows; i++)
-        {
-            for (int j = 0; j < columns; j++)
-            {
-                flippedArray[rows - 1 - i, j] = arrayToFlip[i, j];
-            }
-        }
-        return flippedArray;
-    }
-
     //  Quelle: https://stackoverflow.com/questions/12446770/how-to-compare-multidimensional-arrays-in-c-sharp user287107 Antwort 1
     /// <summary>
     /// Vergleich zweier int[,] Grids
@@ -294,11 +323,13 @@ public class BoardDetection : MonoBehaviour
             int[] coordinates = threadResponseStateResult.ColCoords[columnIndex];
             int x = coordinates[0];
             int y = coordinates[1];
+            //int x = 270;
+            //int y = 90;
 
             GameObject piece = board.CurrentPlayer == Player.Red ? RedPiece : YellowPiece;
-            piece.SetActive(true);
+            piece.SetActive(false);
 
-            piece.transform.localPosition = new Vector3(x, y);
+            piece.transform.position = new Vector2(x, y);
         }
     }
 
