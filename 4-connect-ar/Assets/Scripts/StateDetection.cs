@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using OpenCvSharp;
 using UnityEngine;
 
@@ -51,9 +52,16 @@ public class StateDetection
 
         if (position_list.Count > 0)
         {
-            getState(rect_list, position_list, contour_list, frame, out StateResult result);
-            result.isValid = isValid(result);
-            return result;
+            if(getState(rect_list, position_list, contour_list, frame, out StateResult result))
+            {
+                result.isValid = isValid(result);
+                return result;
+            }
+            else
+            {
+                result.isValid = false;
+                return result;
+            }
         }
         else
         {
@@ -147,12 +155,17 @@ public class StateDetection
             )
             {
                 // add hole data 
-                contour_list.Add(contours[i]);
-                position_list.Add(new int[] { x_rect, y_rect });
-                rect_list.Add(rect);
+                if(!position_list.Exists(x => x[0] == x_rect && x[1] == y_rect))
+                {
+                    contour_list.Add(contours[i]);
+                    position_list.Add(new int[] { x_rect, y_rect });
+                    rect_list.Add(rect);
+                }
             }
 
         }
+
+        var unique_position_list = position_list.Distinct().ToList();
     }
 
     // get current playstate
@@ -177,22 +190,6 @@ public class StateDetection
         mean_h = mean_h / rect_list.Count;
 
         result.MeanChipSize = (int) mean_w;
-
-        position_list.Sort((x, y) => x[0].CompareTo(y[0]));
-
-        int max_x = position_list[position_list.Count - 1][0];
-        int min_x = position_list[0][0];
-
-        position_list.Sort((x, y) => x[1].CompareTo(y[1]));
-
-        int max_y = position_list[position_list.Count - 1][1];
-        int min_y = position_list[0][1];
-
-        int grid_width = max_x - min_x;
-        int grid_height = max_y - min_y;
-
-        int col_spacing = (int)(grid_width / (cols - 1));
-        int row_spacing = (int)(grid_height / (rows - 1));
 
         // red chips
         Mat mask1 = new Mat();
@@ -219,13 +216,39 @@ public class StateDetection
         Cv2.BitwiseAnd(frame, frame, img_yellow, mask_yellow);
         img_yellow.Dispose();
 
-        for (int x_i = 0; x_i < cols; x_i++)
+        if (position_list.Count == 42)
         {
-            int x = (int)(min_x + x_i * col_spacing);
+            position_list.Sort((x, y) => x[0].CompareTo(y[0]));
 
-            for (int y_i = 0; y_i < rows; y_i++)
+            List<List<int[]>> sorted_position_list_tmp = new List<List<int[]>>();
+            for (int i = 0; i < 7; i++)
             {
-                int y = (int)(min_y + y_i * row_spacing);
+                List<int[]> row = new List<int[]>();
+                for (int j = 0; j < 6; j++)
+                {
+                    row.Add(position_list[i * 6 + j]);
+                }
+                sorted_position_list_tmp.Add(row);
+            }
+            List<int[]> sorted_position_list = new List<int[]>();
+
+            foreach (List<int[]> item in sorted_position_list_tmp)
+            {
+                item.Sort((x, y) => x[1].CompareTo(y[1]));
+                foreach (int[] position in item)
+                {
+                    sorted_position_list.Add(position);
+                }
+            }
+
+            int x_i = 0;
+            int y_i = 0;
+            bool isFirstRow = true;
+
+            for (int i = 0; i < sorted_position_list.Count; i++)
+            {
+                int x = (int)sorted_position_list[i][0];
+                int y = (int)sorted_position_list[i][1];
                 int r = (int)((mean_h + mean_w) / 5);
 
                 Mat img_grid_circle = Mat.Zeros(new Size(frame.Width, frame.Height), MatType.CV_8UC1);
@@ -248,21 +271,38 @@ public class StateDetection
                     result.CountYellowChips += 1;
                 }
 
-                result.HoleCoords[x_i, rows - y_i - 1] = new int[]{ x, y };
+                result.HoleCoords[x_i, rows - y_i - 1] = new int[] { x, y };
 
                 img_grid_circle.Dispose();
                 img_res_red.Dispose();
                 img_res_yellow.Dispose();
+
+                if (isFirstRow)
+                {
+                    result.ColCoords[x_i] = new int[] { x, (result.HoleCoords[x_i, 5][1] - (int)mean_h * 2) };
+                }
+
+                isFirstRow = false;
+                y_i++;
+                if (y_i == 6)
+                {
+                    y_i = 0;
+                    x_i++;
+                    isFirstRow = true;
+                }
             }
 
-            result.ColCoords[x_i] = new int[] { x, (result.HoleCoords[x_i, 5][1] - (int)mean_h * 2)};
+            mask_red.Dispose();
+            mask_yellow.Dispose();
+
+            if(result.ColCoords.Any(x => x == null))
+            {
+                return false;
+            }
+
+            return true;
         }
-
-
-        mask_red.Dispose();
-        mask_yellow.Dispose();
-
-        return true;
+        return false;
     }
 
     private bool isValid(StateResult result)
