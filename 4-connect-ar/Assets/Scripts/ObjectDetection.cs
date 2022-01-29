@@ -1,6 +1,7 @@
 using OpenCvSharp;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public enum BoardOperations
@@ -24,8 +25,17 @@ public class ObjectDetection
         //board_haar_cascade = new CascadeClassifier(@"C:\Development\arvr-projekt-meta\data\images\cascade\cascade.xml");
         //board_haar_cascade = new CascadeClassifier(@"http://pastebin.com/raw/UavKbfwm");
         //board_haar_cascade = new CascadeClassifier(Application.dataPath + @"/StreamingAssets/Haar/cascade.xml");
+
         string file = Application.streamingAssetsPath + @"/Haar/cascade.xml";
-        //file = "Haar/cascade.xml";
+
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            WWW www = new WWW(file);
+            while (!www.isDone) { }
+            string persistantPath = Application.persistentDataPath + @"/Haar/cascade.xml";
+            File.WriteAllBytes(persistantPath, www.bytes);
+            file = persistantPath;
+        }
         Debug.Log(file);
         board_haar_cascade = new CascadeClassifier(file);
     }

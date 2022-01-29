@@ -13,7 +13,6 @@ using UnityEngine.UI;
 public class BoardDetection : MonoBehaviour
 {
     public RawImage background; // Theorie: Nur das Cam-Bild
-    public RawImage overlay; // Theorie: Hier nur die Rechtecke zeichnen, ohne Cam-Bild
     public int Width = 640;
     public int Height = 480;
     public BaseAgent Agent;
@@ -36,8 +35,6 @@ public class BoardDetection : MonoBehaviour
     // Position Hover-Column
     public GameObject RedPiece;
     public GameObject YellowPiece;
-    private float posX;
-    private float posY;
     private int suggestedIndex = -1;
 
     // WinStates
@@ -56,8 +53,6 @@ public class BoardDetection : MonoBehaviour
         // https://www.tech-quantum.com/have-fun-with-webcam-and-opencv-in-csharp-part-1/
         // https://www.tech-quantum.com/have-fun-with-webcam-and-opencv-in-csharp-part-2/
 
-        Screen.SetResolution(Width, Height, FullScreenMode.Windowed);
-        camera = new CustomCamera(background, Width, Height);
         objectDetection = new ObjectDetection();
         stateDetection = new StateDetection();
         board = new Board(this);
@@ -66,9 +61,7 @@ public class BoardDetection : MonoBehaviour
         board.UpdateWinstate();
         Agent.Board = board;
 
-
         Texture.allowThreadedTextureCreation = true;
-
 
         // Chips zum Einwerfen
         Texture2D textureRed = RedPiece.GetComponent<Image>().mainTexture as Texture2D;
@@ -84,8 +77,21 @@ public class BoardDetection : MonoBehaviour
         this.suggestedIndex = columnIndex;
     }
 
+    bool isCameraInitialized = false;
+
     private void FixedUpdate()
     {
+        if (!isCameraInitialized)
+        {
+            Screen.SetResolution(Width, Height, FullScreenMode.Windowed);
+            camera = new CustomCamera(background, Width, Height);
+            isCameraInitialized = true;
+        }
+        if (!camera.IsCameraAvailable())
+        {
+            return;
+        }
+
         // Time
         stopwatch.Restart();
 
@@ -233,7 +239,7 @@ public class BoardDetection : MonoBehaviour
         {
             try
             {
-                if (camera == null || threadInputMat == null || threadResponseMat != null)
+                if (camera == null || threadInputMat == null || threadResponseMat != null || Agent.Board == null)
                 {
                     continue;
                 }
@@ -252,16 +258,12 @@ public class BoardDetection : MonoBehaviour
                 int boardX = objectDetection.BoardRegionBounds.X;
                 int boardY = objectDetection.BoardRegionBounds.Y;
 
-                Debug.LogWarning(result.isValid);
                 if (result.isValid)
                 {
                     foreach (var item in result.ColCoords)
                     {
-                        //if(item != null && item.Length == 2)
-                        //{
-                            item[0] += boardX;
-                            item[1] += boardY;
-                        //}
+                        item[0] += boardX;
+                        item[1] += boardY;
                     }
                 }
 

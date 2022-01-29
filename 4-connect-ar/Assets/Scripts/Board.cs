@@ -87,7 +87,6 @@ public class Board
     /// <param name="player">Welcher Spieler es ist</param>
     public void SelectColumn(int columnIndex, Player player)
     {
-        Debug.Log(CurrentPlayer + " says: Column " + columnIndex);
         boardDetection?.SuggestColumn(columnIndex);
     }
 
