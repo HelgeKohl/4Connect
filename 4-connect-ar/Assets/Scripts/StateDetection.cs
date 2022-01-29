@@ -27,13 +27,13 @@ public class StateDetection
 
     public StateDetection()
     {
-        lower_red_1 = new OpenCvSharp.Scalar(0, 175, 50);
-        higher_red_1 = new OpenCvSharp.Scalar(10, 255, 255);
-        lower_red_2 = new OpenCvSharp.Scalar(170, 175, 50);
+        lower_red_1 = new OpenCvSharp.Scalar(0, 150, 70);
+        higher_red_1 = new OpenCvSharp.Scalar(8, 255, 255);
+        lower_red_2 = new OpenCvSharp.Scalar(160, 150, 70);
         higher_red_2 = new OpenCvSharp.Scalar(180, 255, 255);
-        lower_yellow = new OpenCvSharp.Scalar(15, 125, 20);
-        higher_yellow = new OpenCvSharp.Scalar(45, 255, 255);
-        lower_blue = new OpenCvSharp.Scalar(100, 100, 20);
+        lower_yellow = new OpenCvSharp.Scalar(20, 120, 75);
+        higher_yellow = new OpenCvSharp.Scalar(60, 255, 255);
+        lower_blue = new OpenCvSharp.Scalar(90, 100, 20);
         higher_blue = new OpenCvSharp.Scalar(140, 255, 255);
     }
 
@@ -252,7 +252,7 @@ public class StateDetection
                 int r = (int)((mean_h + mean_w) / 5);
 
                 Mat img_grid_circle = Mat.Zeros(new Size(frame.Width, frame.Height), MatType.CV_8UC1);
-                Cv2.Circle(img_grid_circle, x, y, r, new OpenCvSharp.Scalar(255, 255, 255), 1);
+                Cv2.Circle(img_grid_circle, x, y, r, new OpenCvSharp.Scalar(255, 255, 255), -1);
 
                 Mat img_res_red = new Mat();
                 Cv2.BitwiseAnd(img_grid_circle, img_grid_circle, img_res_red, mask_red);
