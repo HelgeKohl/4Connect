@@ -105,8 +105,17 @@ public class BoardDetection : MonoBehaviour
             {
                 int[] item = threadResponseStateResult.ColCoords[i];
                 OpenCvSharp.Rect bounds = new OpenCvSharp.Rect();
-                bounds.X = item[0];
-                bounds.Y = item[1];
+
+                try
+                {
+                    bounds.X = item[0];
+                    bounds.Y = item[1];
+                }
+                catch (Exception)
+                {
+                    threadResponseMat = threadInputMat;
+                    return;
+                }
 
                 
 
@@ -167,6 +176,10 @@ public class BoardDetection : MonoBehaviour
                 
                 threadResponseMat = threadInputMat;
             }
+        }
+        else
+        {
+            threadResponseMat = threadInputMat;
         }
 
         if (threadInputMat != null)
