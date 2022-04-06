@@ -33,8 +33,8 @@ public class StateDetection
         higher_red_2 = new OpenCvSharp.Scalar(180, 255, 255);
         lower_yellow = new OpenCvSharp.Scalar(20, 120, 75);
         higher_yellow = new OpenCvSharp.Scalar(60, 255, 255);
-        lower_blue = new OpenCvSharp.Scalar(90, 100, 20);
-        higher_blue = new OpenCvSharp.Scalar(140, 255, 255);
+        lower_blue = new OpenCvSharp.Scalar(100, 100, 80);
+        higher_blue = new OpenCvSharp.Scalar(135, 255, 255);
     }
 
     public StateResult detectState(Mat frame)
@@ -92,26 +92,26 @@ public class StateDetection
         Cv2.CvtColor(board_only, board_only_gray, ColorConversionCodes.BGR2GRAY);
         board_only.Dispose();
 
-        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
-        Mat dilated = new Mat();
-        Cv2.Dilate(board_only_gray, dilated, kernel, null, 1);
-        board_only_gray.Dispose();
-
-        Mat eroded = new Mat();
-        Cv2.Erode(dilated, eroded, kernel, null, 3);
-        dilated.Dispose();
-
         // threshold grayscale
         Mat thresh = new Mat();
-        Cv2.Threshold(eroded, thresh, 10, 255, ThresholdTypes.Binary);
-        eroded.Dispose();
+        Cv2.Threshold(board_only_gray, thresh, 10, 255, ThresholdTypes.Binary);
+        board_only_gray.Dispose();
+
+        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
+        Mat dilated = new Mat();
+        Cv2.Dilate(thresh, dilated, kernel, null, 3);
+        thresh.Dispose();
+
+        Mat eroded = new Mat();
+        Cv2.Erode(dilated, eroded, kernel, null, 1);
+        dilated.Dispose();
         kernel.Dispose();
 
         // canny edge detection
         FrameOut = new Mat();
-        Cv2.Canny(thresh, FrameOut, 175, 200);
-        thresh.Dispose();
-    }
+        Cv2.Canny(eroded, FrameOut, 175, 200);
+        eroded.Dispose();
+    } 
 
     // setup list of holes
     private void setupLists(Mat preproccessed, out List<Point[]> contour_list, out List<OpenCvSharp.Rect> rect_list, out List<int[]> position_list)
