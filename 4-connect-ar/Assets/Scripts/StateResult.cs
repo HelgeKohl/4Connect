@@ -1,8 +1,10 @@
 ﻿using System;
+using OpenCvSharp;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 
 public class StateResult
@@ -14,6 +16,7 @@ public class StateResult
     public int CountYellowChips { get; set; }
     public bool isValid { get; set; }
     public int MeanChipSize { get; set; }
+    public Mat Frame { get; set; }
 
     public StateResult()
     {
@@ -23,6 +26,7 @@ public class StateResult
         CountRedChips = 0;
         CountYellowChips = 0;
         MeanChipSize = 0;
+        Frame = new Mat();
     }
 }
 

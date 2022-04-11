@@ -52,7 +52,9 @@ public class StateDetection
 
         if (position_list.Count > 0)
         {
-            if(getState(rect_list, position_list, contour_list, frame, out StateResult result))
+            bool stateDetected = getState(rect_list, position_list, contour_list, frame, out StateResult result);
+            result.Frame = preproccessed;
+            if (stateDetected)
             {
                 result.isValid = isValid(result);
                 return result;
@@ -99,17 +101,17 @@ public class StateDetection
 
         Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
         Mat dilated = new Mat();
-        Cv2.Dilate(thresh, dilated, kernel, null, 3);
+        Cv2.Dilate(thresh, dilated, kernel, null, 1);
         thresh.Dispose();
 
         Mat eroded = new Mat();
         Cv2.Erode(dilated, eroded, kernel, null, 1);
-        dilated.Dispose();
         kernel.Dispose();
 
         // canny edge detection
         FrameOut = new Mat();
         Cv2.Canny(eroded, FrameOut, 175, 200);
+        dilated.Dispose();
         eroded.Dispose();
     } 
 
@@ -148,7 +150,7 @@ public class StateDetection
             if (
                 approx.Length >= 6 &&
                 approx.Length <= 20 &&
-                area > 250 &&
+                area > 180 &&
                 area_rect < ((preproccessed.Width * preproccessed.Height) / 5) &&
                 w_rect >= (h_rect - 15) &&
                 w_rect <= (h_rect + 15)
