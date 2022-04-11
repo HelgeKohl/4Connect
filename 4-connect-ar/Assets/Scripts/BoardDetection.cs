@@ -79,6 +79,21 @@ public class BoardDetection : MonoBehaviour
 
     bool isCameraInitialized = false;
 
+    internal Mat GetNaoImageFrameAsMat()
+    {
+        if (NaoSocketServer.ImageBytes == null)
+        {
+            return null;
+        }
+
+        Texture2D image2d = new Texture2D(640, 480);
+        image2d.LoadImage(NaoSocketServer.ImageBytes);
+        Mat matrix = OpenCvSharp.Unity.TextureToMat(image2d);
+        Destroy(image2d);
+
+        return matrix;
+    }
+
     private void FixedUpdate()
     {
         if (!isCameraInitialized)
@@ -95,8 +110,19 @@ public class BoardDetection : MonoBehaviour
         // Time
         stopwatch.Restart();
 
-        camera.Refresh();
-        threadInputMat = camera.GetCurrentFrameAsMat();
+        bool useCameraInput = false;
+        if(useCameraInput)
+        {
+            camera.Refresh();
+            threadInputMat = camera.GetCurrentFrameAsMat();
+        }
+        else
+        {
+            // Nao Magic
+            threadInputMat = GetNaoImageFrameAsMat();
+        }
+        
+        
 
         
         if (threadResponseStateResult != null && threadInputMat != null && threadResponseStateResult.isValid)
@@ -196,12 +222,29 @@ public class BoardDetection : MonoBehaviour
             background.texture = OpenCvHelper.Overlay;
         }
 
-        ShowWinState(board.WinState);
-        ShowSuggestedPiece(suggestedIndex);
-        if (board.WinState == WinState.MatchNotFinished && suggestedIndex >= 0)
+        //ShowWinState(board.WinState);
+        //ShowSuggestedPiece(suggestedIndex);
+        //if (board.WinState == WinState.MatchNotFinished && suggestedIndex >= 0)
+        //{
+        //    ShowSuggestedPiece(suggestedIndex);
+        //}
+
+        // Response to Nao
+        //if (threadResponseStateResult != null && threadResponseStateResult.isValid)
+        //if (threadResponseStateResult != null)
+        //{
+        if (NaoSocketServer.NaoRequestActive 
+            && threadResponseStateResult != null
+            && threadResponseStateResult.isValid)
         {
-            ShowSuggestedPiece(suggestedIndex);
+            NaoSocketServer.SetState(board.WinState, suggestedIndex);
+            NaoSocketServer.ImageBytes = null;
+            NaoSocketServer.NaoRequestActive = false;
+            //threadInputMat = null;
         }
+            //threadInputMat = null;
+        //}
+
         // ---
 
         stopwatch.Stop();

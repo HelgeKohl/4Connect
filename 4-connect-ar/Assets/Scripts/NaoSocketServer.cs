@@ -13,6 +13,11 @@ public class NaoSocketServer : MonoBehaviour
 {
     System.Threading.Thread SocketThread;
     volatile bool keepReading = false;
+    internal static byte[] ImageBytes = null;
+    public static WinState WinState { get; private set; }
+    public static int SuggestedIndex { get; private set; }
+    public static bool NaoRequestActive { get; internal set; }
+
 
     // Use this for initialization
     void Start()
@@ -50,6 +55,8 @@ public class NaoSocketServer : MonoBehaviour
 
     Socket listener;
     Socket handler;
+
+
 
     public static void AppendAllBytes(string path, byte[] bytes)
     {
@@ -120,14 +127,17 @@ public class NaoSocketServer : MonoBehaviour
                     //data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
 
                     //AppendAllBytes(@"C:\Users\Stephan\Desktop\nao\client_server_sockets_send_img_py\unity.png", bytes);
-                    AppendAllBytes(@"C:\Development\nao\nao\client_server_sockets_send_img_py\unity.png", bytes);
+                    AppendAllBytes(@"C:\Development\nao\nao-python\unity.png", bytes);
                     data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
                     if (data.IndexOf("<EOF>") > -1)
                     {
+
+
+
                         //data = data.Replace("<EOF>", "");
                         Debug.Log("EOF");
-                        string file = @"C:\Development\nao\nao\client_server_sockets_send_img_py\unity.png";
-                        string file_current = @"C:\Development\nao\nao\client_server_sockets_send_img_py\unity_current.png";
+                        string file = @"C:\Development\nao\nao-python\unity.png";
+                        string file_current = @"C:\Development\nao\nao-python\unity_current.png";
                         if (File.Exists(file_current))
                         {
                             File.Delete(file_current);
@@ -137,9 +147,27 @@ public class NaoSocketServer : MonoBehaviour
                         {
                             File.Delete(file);
                         }
+
+                        // Neues Bild übertragen und erhalten
+                        // file_current
+                        //Texture2D image = new Texture2D(640, 480);
+                        //NaoSocketServer.Image = new Texture2D(640, 480);
+                        NaoSocketServer.ImageBytes = File.ReadAllBytes(file_current);
+
+                        NaoSocketServer.NaoRequestActive = true;
+                        //NaoSocketServer.Image.LoadImage(imgBytes);
+
                         //AppendAllBytes(file, Encoding.ASCII.GetBytes(data));
-                        
+
+                        while(NaoSocketServer.NaoRequestActive)
+                        {
+                            System.Threading.Thread.Sleep(1);
+                        }
+
+
                         data = null;
+
+                        
 
                         //struct.pack('!ii', state, column)
                         object[] items = new object[2];
@@ -149,6 +177,10 @@ public class NaoSocketServer : MonoBehaviour
                         //items[1] = 2;
                         items[0] = new System.Random().Next(4);
                         items[1] = new System.Random().Next(7);
+
+                        items[0] = (int) NaoSocketServer.WinState;
+                        items[1] = NaoSocketServer.SuggestedIndex;
+                        Debug.Log(items[0] + " ... " + items[1]);
                         byte[] packed = StructConverter.Pack(items);
 
                         handler.Send(packed);
@@ -189,6 +221,14 @@ public class NaoSocketServer : MonoBehaviour
     void OnDisable()
     {
         stopServer();
+    }
+
+    internal static void SetState(WinState winState, int suggestedIndex)
+    {
+        WinState = winState;
+        SuggestedIndex = suggestedIndex;
+        Debug.Log("" + winState);
+        Debug.Log("Winstate: " + (int)WinState + " SuggestedIndex: " + suggestedIndex);
     }
 }
 
