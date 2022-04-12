@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +18,13 @@ public class NaoSocketServer : MonoBehaviour
     public static WinState WinState { get; private set; }
     public static int SuggestedIndex { get; private set; }
     public static bool NaoRequestActive { get; internal set; }
+
+    public static string PythonNaoPath { 
+        get
+        {
+            return Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "python-nao");
+        }
+    }
 
 
     // Use this for initialization
@@ -98,22 +106,16 @@ public class NaoSocketServer : MonoBehaviour
                 keepReading = true;
 
                 // Program is suspended while waiting for an incoming connection.
-                Debug.Log("Waiting for Connection");     //It works
-
+                Debug.Log("Waiting for Connection");
                 handler = listener.Accept();
-                Debug.Log("Client Connected");     //It doesn't work
+                Debug.Log("Client Connected");
                 data = null;
-
 
                 // An incoming connection needs to be processed.
                 while (keepReading)
                 {
                     bytes = new byte[1024];
-                    //bytes = new byte[4];
-                    //bytes = new byte[361731];
                     int bytesRec = handler.Receive(bytes);
-                    //Debug.Log("Received from Server bytes: - " + bytes);
-                    //Debug.Log("Received from Server - bytesRec: " + bytesRec);
 
                     if (bytesRec <= 0)
                     {
@@ -121,28 +123,22 @@ public class NaoSocketServer : MonoBehaviour
                         handler.Disconnect(true);
                         break;
                     }
-
-                    //Debug.Log("Unpack: " + StructConverter.Unpack(">i", bytes));
-
-                    //data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-
-                    //AppendAllBytes(@"C:\Users\Stephan\Desktop\nao\client_server_sockets_send_img_py\unity.png", bytes);
-                    AppendAllBytes(@"C:\Development\nao\nao-python\unity.png", bytes);
+                    
+                    AppendAllBytes(Path.Combine(PythonNaoPath, "tmp", "unity.png"), bytes);
                     data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
                     if (data.IndexOf("<EOF>") > -1)
                     {
-
-
-
-                        //data = data.Replace("<EOF>", "");
                         Debug.Log("EOF");
-                        string file = @"C:\Development\nao\nao-python\unity.png";
-                        string file_current = @"C:\Development\nao\nao-python\unity_current.png";
+                        string file = Path.Combine(PythonNaoPath, "tmp", "unity.png");
+                        string file_current = Path.Combine(PythonNaoPath, "tmp", "unity_current.png");
+
+                        // Delete old unity_current.png file, if it exists
                         if (File.Exists(file_current))
                         {
                             File.Delete(file_current);
                         }
                         File.Move(file, file_current);
+                        // Delete tmp unity.png file
                         if (File.Exists(file))
                         {
                             File.Delete(file);
