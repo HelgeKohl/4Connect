@@ -35,7 +35,7 @@ public class OpenCvHelper : MonoBehaviour
 
     public static Texture2D ToTexture2D(Texture texture)
     {
-        Texture2D texture2d = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
+        Texture2D texture2d = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
 
         Graphics.CopyTexture(texture, texture2d);
 

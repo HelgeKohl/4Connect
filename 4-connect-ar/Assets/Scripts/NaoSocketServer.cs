@@ -26,6 +26,8 @@ public class NaoSocketServer : MonoBehaviour
         }
     }
 
+    public static Texture2D CurrentTexture2D { get; internal set; }
+
 
     // Use this for initialization
     void Start()
@@ -149,6 +151,9 @@ public class NaoSocketServer : MonoBehaviour
                         //Texture2D image = new Texture2D(640, 480);
                         //NaoSocketServer.Image = new Texture2D(640, 480);
                         NaoSocketServer.ImageBytes = File.ReadAllBytes(file_current);
+
+                        // Zurücksetzen
+                        NaoSocketServer.CurrentTexture2D = null;
 
                         NaoSocketServer.NaoRequestActive = true;
                         //NaoSocketServer.Image.LoadImage(imgBytes);

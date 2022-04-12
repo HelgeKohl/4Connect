@@ -94,15 +94,34 @@ public class BoardDetection : MonoBehaviour
         return matrix;
     }
 
+    internal Texture2D GetNaoImageFrameAsTexture2D()
+    {
+        if (NaoSocketServer.ImageBytes == null)
+        {
+            return null;
+        }
+
+        if (NaoSocketServer.CurrentTexture2D == null)
+        {
+            Destroy(NaoSocketServer.CurrentTexture2D);
+            NaoSocketServer.CurrentTexture2D = new Texture2D(640, 480, TextureFormat.BGRA32, false);
+            NaoSocketServer.CurrentTexture2D.LoadImage(NaoSocketServer.ImageBytes);
+        }
+
+        return NaoSocketServer.CurrentTexture2D;
+    }
+
     private void FixedUpdate()
     {
+        bool useCameraInput = false;
+
         if (!isCameraInitialized)
         {
             Screen.SetResolution(Width, Height, FullScreenMode.Windowed);
             camera = new CustomCamera(background, Width, Height);
             isCameraInitialized = true;
         }
-        if (!camera.IsCameraAvailable())
+        if (!camera.IsCameraAvailable() && useCameraInput)
         {
             return;
         }
@@ -110,8 +129,7 @@ public class BoardDetection : MonoBehaviour
         // Time
         stopwatch.Restart();
 
-        bool useCameraInput = false;
-        if(useCameraInput)
+        if (useCameraInput)
         {
             camera.Refresh();
             threadInputMat = camera.GetCurrentFrameAsMat();
@@ -119,11 +137,10 @@ public class BoardDetection : MonoBehaviour
         else
         {
             // Nao Magic
-            threadInputMat = GetNaoImageFrameAsMat();
+            Texture2D texture2d = GetNaoImageFrameAsTexture2D();
+            camera.SetCustomTexture(texture2d);
+            threadInputMat = camera.GetCurrentFrameAsMat();
         }
-        
-        
-
         
         if (threadResponseStateResult != null && threadInputMat != null && threadResponseStateResult.isValid)
         {
@@ -222,12 +239,12 @@ public class BoardDetection : MonoBehaviour
             background.texture = OpenCvHelper.Overlay;
         }
 
-        //ShowWinState(board.WinState);
-        //ShowSuggestedPiece(suggestedIndex);
-        //if (board.WinState == WinState.MatchNotFinished && suggestedIndex >= 0)
-        //{
-        //    ShowSuggestedPiece(suggestedIndex);
-        //}
+        ShowWinState(board.WinState);
+        ShowSuggestedPiece(suggestedIndex);
+        if (board.WinState == WinState.MatchNotFinished && suggestedIndex >= 0)
+        {
+            ShowSuggestedPiece(suggestedIndex);
+        }
 
         // Response to Nao
         //if (threadResponseStateResult != null && threadResponseStateResult.isValid)

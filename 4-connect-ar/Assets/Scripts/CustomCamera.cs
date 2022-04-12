@@ -22,13 +22,14 @@ public class CustomCamera
         InitializeCamera();
     }
 
-    public void SetColors(Color32[] colors)
-    { 
-    }
-
     public void Refresh()
     {
         canvas.texture = cameraTexture;
+    }
+
+    public void SetCustomTexture(Texture customTexture)
+    {
+        canvas.texture = customTexture;
     }
 
     public void RefreshCameraRatio()
