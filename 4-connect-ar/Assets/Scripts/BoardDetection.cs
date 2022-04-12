@@ -44,6 +44,7 @@ public class BoardDetection : MonoBehaviour
 
     // Debug
     public bool debug;
+    public bool debugDetection;
     public bool debugFps;
     System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
@@ -236,7 +237,14 @@ public class BoardDetection : MonoBehaviour
 
         if (OpenCvHelper.Overlay != null)
         {
-            background.texture = OpenCvHelper.Overlay;
+            if (this.debugDetection)
+            {
+                background.texture = OpenCvSharp.Unity.MatToTexture(threadResponseStateResult.Frame);
+            }
+            else
+            {
+                background.texture = OpenCvHelper.Overlay;
+            }
         }
 
         ShowWinState(board.WinState);
@@ -322,6 +330,7 @@ public class BoardDetection : MonoBehaviour
 
                 if (boardRegion == null)
                 {
+                    Debug.Log("Feld wurde nicht gefunden");
                     continue;
                 }
 

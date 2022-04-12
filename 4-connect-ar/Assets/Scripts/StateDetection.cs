@@ -33,7 +33,7 @@ public class StateDetection
         higher_red_2 = new OpenCvSharp.Scalar(180, 255, 255);
         lower_yellow = new OpenCvSharp.Scalar(20, 120, 75);
         higher_yellow = new OpenCvSharp.Scalar(60, 255, 255);
-        lower_blue = new OpenCvSharp.Scalar(100, 100, 80);
+        lower_blue = new OpenCvSharp.Scalar(100, 100, 60);
         higher_blue = new OpenCvSharp.Scalar(135, 255, 255);
     }
 
@@ -53,20 +53,24 @@ public class StateDetection
         if (position_list.Count > 0)
         {
             bool stateDetected = getState(rect_list, position_list, contour_list, frame, out StateResult result);
-            result.Frame = preproccessed;
+            //result.Frame = preproccessed;
             if (stateDetected)
             {
+                Debug.Log("Eigentlich sollte alles Passen");
                 result.isValid = isValid(result);
+                Debug.Log("State ist " + result.isValid);
                 return result;
             }
             else
             {
+                Debug.Log("getState war false");
                 result.isValid = false;
                 return result;
             }
         }
         else
         {
+            Debug.Log("Positionlist war leer");
             StateResult result = new StateResult();
             result.isValid = false;
             return result;
@@ -148,12 +152,12 @@ public class StateDetection
 
             // check if contour is a really a hole
             if (
-                approx.Length >= 6 &&
-                approx.Length <= 20 &&
-                area > 180 &&
+                approx.Length >= 4 &&
+                approx.Length <= 25 &&
+                area > 20 &&
                 area_rect < ((preproccessed.Width * preproccessed.Height) / 5) &&
-                w_rect >= (h_rect - 15) &&
-                w_rect <= (h_rect + 15)
+                w_rect >= (h_rect - 30) &&
+                w_rect <= (h_rect + 30)
             )
             {
                 // add hole data 
@@ -207,6 +211,7 @@ public class StateDetection
 
         Mat img_red = new Mat();
         Cv2.BitwiseAnd(frame, frame, img_red, mask_red);
+        
         img_red.Dispose();
 
         // yellow chips
@@ -217,6 +222,8 @@ public class StateDetection
         Mat img_yellow = new Mat();
         Cv2.BitwiseAnd(frame, frame, img_yellow, mask_yellow);
         img_yellow.Dispose();
+
+        Debug.Log(position_list.Count);
 
         if (position_list.Count == 42)
         {
@@ -264,11 +271,13 @@ public class StateDetection
 
                 if (Cv2.CountNonZero(img_res_red) > 0)
                 {
+                    Debug.Log("Red");
                     result.State[x_i, rows - y_i - 1] = id_red;
                     result.CountRedChips += 1;
                 }
                 else if (Cv2.CountNonZero(img_res_yellow) > 0)
                 {
+                    Debug.Log("Yellow");
                     result.State[x_i, rows - y_i - 1] = id_yellow;
                     result.CountYellowChips += 1;
                 }
@@ -297,12 +306,17 @@ public class StateDetection
             mask_red.Dispose();
             mask_yellow.Dispose();
 
-            if(result.ColCoords.Any(x => x == null))
+            if (result.ColCoords.Any(x => x == null))
             {
+                Debug.Log("ColCoords hat Null Wert");
                 return false;
             }
 
             return true;
+        }
+        else
+        {
+            Debug.Log("Nicht genug Löcher gefunden");
         }
         return false;
     }

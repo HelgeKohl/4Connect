@@ -1,0 +1,3 @@
+3,4
+2 Board nicht erkannt
+1 State nicht erkannt (zu dunkel)
