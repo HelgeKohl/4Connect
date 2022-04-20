@@ -248,7 +248,7 @@ public class BoardDetection : MonoBehaviour
         }
 
         ShowWinState(board.WinState);
-        ShowSuggestedPiece(suggestedIndex);
+
         if (board.WinState == WinState.MatchNotFinished && suggestedIndex >= 0)
         {
             ShowSuggestedPiece(suggestedIndex);
@@ -325,17 +325,18 @@ public class BoardDetection : MonoBehaviour
                     continue;
                 }
 
-                BoardOperations regionSelectionOperation = BoardOperations.CropOuterRegion;
-                Mat boardRegion = objectDetection.DetectObjects(threadInputMat, regionSelectionOperation);
+                //BoardOperations regionSelectionOperation = BoardOperations.CropOuterRegion;
+                //Mat boardRegion = objectDetection.DetectObjects(threadInputMat, regionSelectionOperation);
 
-                if (boardRegion == null)
-                {
-                    Debug.Log("Feld wurde nicht gefunden");
-                    continue;
-                }
+                //if (boardRegion == null)
+                //{
+                //    Debug.Log("Feld wurde nicht gefunden");
+                //    continue;
+                //}
 
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
-                StateResult result = stateDetection.detectState(boardRegion == null || regionSelectionOperation == BoardOperations.Highlight ? threadInputMat : boardRegion);
+                //StateResult result = stateDetection.detectState(boardRegion == null || regionSelectionOperation == BoardOperations.Highlight ? threadInputMat : boardRegion);
+                StateResult result = stateDetection.detectState(threadInputMat);
 
                 int boardX = objectDetection.BoardRegionBounds.X;
                 int boardY = objectDetection.BoardRegionBounds.Y;

@@ -7,7 +7,7 @@ from struct import calcsize
 # Konfiguration der zu sendenden Datei
 ########################
 dir_path = os.path.dirname(os.path.realpath(__file__))
-file = os.path.join(dir_path, "res", "12_04_2022", "4.png")
+file = os.path.join(dir_path, "res", "19_04_2022", "931170_camImage.png")
 
 
 ########################

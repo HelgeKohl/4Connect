@@ -4,6 +4,7 @@ using System.Linq;
 using OpenCvSharp;
 using UnityEngine;
 
+
 public class StateDetection
 {
     private int rows = 6;
@@ -33,8 +34,8 @@ public class StateDetection
         higher_red_2 = new OpenCvSharp.Scalar(180, 255, 255);
         lower_yellow = new OpenCvSharp.Scalar(20, 120, 75);
         higher_yellow = new OpenCvSharp.Scalar(60, 255, 255);
-        lower_blue = new OpenCvSharp.Scalar(100, 100, 60);
-        higher_blue = new OpenCvSharp.Scalar(135, 255, 255);
+        lower_blue = new OpenCvSharp.Scalar(110, 50, 50);
+        higher_blue = new OpenCvSharp.Scalar(130, 255, 255);
     }
 
     public StateResult detectState(Mat frame)
@@ -53,11 +54,11 @@ public class StateDetection
         if (position_list.Count > 0)
         {
             bool stateDetected = getState(rect_list, position_list, contour_list, frame, out StateResult result);
-            //result.Frame = preproccessed;
+            result.Frame = preproccessed;
             if (stateDetected)
             {
-                Debug.Log("Eigentlich sollte alles Passen");
                 result.isValid = isValid(result);
+
                 Debug.Log("State ist " + result.isValid);
                 return result;
             }
@@ -93,30 +94,50 @@ public class StateDetection
         Cv2.BitwiseAnd(FrameIn, FrameIn, board_only, blue_mask);
         blue_mask.Dispose();
 
-        // convert to grayscale
-        Mat board_only_gray = new Mat();
-        Cv2.CvtColor(board_only, board_only_gray, ColorConversionCodes.BGR2GRAY);
+        Mat board_only_blurred = new Mat();
+        Cv2.MedianBlur(board_only, board_only_blurred, 11);
         board_only.Dispose();
 
-        // threshold grayscale
+        Mat cimg = new Mat();
+        Cv2.CvtColor(board_only_blurred, cimg, ColorConversionCodes.BGR2GRAY);
+        board_only_blurred.Dispose();
+
         Mat thresh = new Mat();
-        Cv2.Threshold(board_only_gray, thresh, 10, 255, ThresholdTypes.Binary);
-        board_only_gray.Dispose();
+        Cv2.Threshold(cimg, thresh, 0, 255, ThresholdTypes.BinaryInv | ThresholdTypes.Otsu);
+        board_only_blurred.Dispose();
 
-        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
-        Mat dilated = new Mat();
-        Cv2.Dilate(thresh, dilated, kernel, null, 1);
+        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(3, 15));
+
+        FrameOut = new Mat();
+        Cv2.Erode(thresh, FrameOut, kernel, null, 1);
+
         thresh.Dispose();
-
-        Mat eroded = new Mat();
-        Cv2.Erode(dilated, eroded, kernel, null, 1);
         kernel.Dispose();
 
-        // canny edge detection
-        FrameOut = new Mat();
-        Cv2.Canny(eroded, FrameOut, 175, 200);
-        dilated.Dispose();
-        eroded.Dispose();
+        //// convert to grayscale
+        //Mat board_only_gray = new Mat();
+        //Cv2.CvtColor(board_only, board_only_gray, ColorConversionCodes.BGR2GRAY);
+        //board_only.Dispose();
+
+        //// threshold grayscale
+        //Mat thresh = new Mat();
+        //Cv2.Threshold(board_only_gray, thresh, 10, 255, ThresholdTypes.Binary);
+        //board_only_gray.Dispose();
+
+        //Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
+        //Mat dilated = new Mat();
+        //Cv2.Dilate(thresh, dilated, kernel, null, 1);
+        //thresh.Dispose();
+
+        //Mat eroded = new Mat();
+        //Cv2.Erode(dilated, eroded, kernel, null, 1);
+        //kernel.Dispose();
+
+        //// canny edge detection
+        //FrameOut = new Mat();
+        //Cv2.Canny(eroded, FrameOut, 175, 200);
+        //dilated.Dispose();
+        //eroded.Dispose();
     } 
 
     // setup list of holes
@@ -172,6 +193,48 @@ public class StateDetection
         }
 
         var unique_position_list = position_list.Distinct().ToList();
+    }
+
+
+    private void setupLists(Mat preproccessed)
+    {
+        Mat labels = new Mat();
+        Mat stats = new Mat();
+        Mat centroids = new Mat();
+
+        int num_labels = Cv2.ConnectedComponentsWithStats(preproccessed, labels, stats, centroids, PixelConnectivity.Connectivity8, MatType.CV_32S);
+
+        int count_circles = 0;
+        int left_c = 1000;
+        int right_c = 0;
+        int top_c = 1000;
+        int bottom_c = 0;
+
+        for (int i = 0; i < num_labels; i++)
+        {
+            if (stats.At<int>(i, -1) < 1000)
+            {
+                count_circles += 1;
+                if (left_c >= centroids.At<int>(i, 0))
+                {
+                    left_c = (int)centroids.At<int>(i, 0);
+                }
+                if (right_c >= centroids.At<int>(i, 0))
+                {
+                    right_c = (int)centroids.At<int>(i, 0);
+                }
+                if (top_c >= centroids.At<int>(i, 1))
+                {
+                    top_c = (int)centroids.At<int>(i, 1);
+                }
+                if (bottom_c >= centroids.At<int>(i, 1))
+                {
+                    bottom_c = (int)centroids.At<int>(i, 1);
+                }
+            }
+        }
+
+        Debug.Log("Field objects: " + count_circles);
     }
 
     // get current playstate
@@ -271,13 +334,11 @@ public class StateDetection
 
                 if (Cv2.CountNonZero(img_res_red) > 0)
                 {
-                    Debug.Log("Red");
                     result.State[x_i, rows - y_i - 1] = id_red;
                     result.CountRedChips += 1;
                 }
                 else if (Cv2.CountNonZero(img_res_yellow) > 0)
                 {
-                    Debug.Log("Yellow");
                     result.State[x_i, rows - y_i - 1] = id_yellow;
                     result.CountYellowChips += 1;
                 }

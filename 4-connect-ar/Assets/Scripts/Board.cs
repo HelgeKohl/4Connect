@@ -175,7 +175,6 @@ public class Board
 
     public void printGrid()
     {
-        Debug.Log("#############");
         string grid_str = "";
         for (int i = 0; i < 6; i++)
         {
