@@ -12,12 +12,12 @@ public class BoardEvaluator// : MonoBehaviour
     public const int POINTS_LOSS = -1000;
     public const int POINTS_DRAW_STARTING_PLAYER = -200;
     public const int POINTS_DRAW_SECOND_PLAYER = 800;
-           
+
     // Blocks
     public const int POINTS_BLOCK_4_IN_A_ROW = 700;
     public const int POINTS_BLOCK_3_IN_A_ROW = 200;
     public const int POINTS_BLOCK_3_IN_A_ROW_VERTICAL = 50;
-           
+
     // Threat
     public const int POINTS_THREAT_3_IN_A_ROW = 70;
     public const int POINTS_THREAT_2_IN_A_ROW = 35;
@@ -263,6 +263,11 @@ public class BoardEvaluator// : MonoBehaviour
         }
 
         return WinState.MatchNotFinished;
+    }
+
+    private int EvaluateStateChange()
+    {
+        return 0;
     }
 
     public int EvaluateReward(int column, int row)

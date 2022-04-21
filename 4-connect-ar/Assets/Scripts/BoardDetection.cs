@@ -354,6 +354,7 @@ public class BoardDetection : MonoBehaviour
 
                 // Prüfe ob State sich geändert hat
                 bool gridStateHasChanged = stateChanged(result.State, board.State);
+                bool gridStateChangedRight = checkSuggestedCoin(result.State);
 
                 if (!result.isValid)
                 {
@@ -362,6 +363,14 @@ public class BoardDetection : MonoBehaviour
                 }
                 else
                 {
+                    if (!gridStateHasChanged)
+                    {
+                        board.WinState = WinState.NoChange;
+                    }
+                    if (!gridStateChangedRight)
+                    {
+                        board.WinState = WinState.Wrong;
+                    }
                     // aktualisieren des States
                     //board.State = FlipArrayHorizontal(result.State);
                     board.State = result.State;
@@ -413,6 +422,25 @@ public class BoardDetection : MonoBehaviour
         return !equal;
     }
 
+    private bool checkSuggestedCoin(int[,] inputGrid)
+    {
+        for(int i = 0; i < 6; i++)
+        {
+            if (board.State[suggestedIndex, i] != 0)
+            {
+                if(inputGrid[suggestedIndex, i-1] == -1)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
     public void ShowSuggestedPiece(int columnIndex)
     {
         RedPiece.SetActive(false);
@@ -450,6 +478,10 @@ public class BoardDetection : MonoBehaviour
                 Draw.SetActive(true);
                 break;
             case WinState.MatchNotFinished:
+                break;
+            case WinState.NoChange:
+                break;
+            case WinState.Wrong:
                 break;
             default:
                 break;

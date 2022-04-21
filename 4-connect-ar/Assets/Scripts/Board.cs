@@ -5,10 +5,12 @@ using UnityEngine;
 
 public enum WinState
 {
-    RedWin,
-    YellowWin,
-    Draw,
-    MatchNotFinished
+    NoChange = 0,
+    Wrong = 1,
+    YellowWin = 2,
+    RedWin = 3,
+    MatchNotFinished = 4,
+    Draw = 5,
 }
 
 public enum Player
@@ -31,6 +33,8 @@ public class Board
     // 0 0 0 2 0 0 0
     // 0 0 0 1 2 1 0
     public int[,] State { get; set; } // is empty, 1 is player1, 2 is player2
+    public int[,] OldState { get; set; }
+
     public BoardEvaluator Evaluator { get; set; }
     public WinState WinState { get; set; }
 
@@ -65,6 +69,7 @@ public class Board
     public void Reset()
     {
         State = new int[Width, Height];
+        OldState = new int[Width, Height];
     }
 
     public int GetRowOfInsertedChip(int column)
