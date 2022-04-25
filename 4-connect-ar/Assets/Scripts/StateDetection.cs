@@ -7,6 +7,8 @@ using UnityEngine;
 
 public class StateDetection
 {
+    private bool debugDetection = false;
+
     private int rows = 6;
     private int cols = 7;
 
@@ -38,23 +40,51 @@ public class StateDetection
         higher_blue = new OpenCvSharp.Scalar(130, 255, 255);
     }
 
+    public StateDetection(bool DebugDetection)
+    {
+        lower_red_1 = new OpenCvSharp.Scalar(0, 150, 70);
+        higher_red_1 = new OpenCvSharp.Scalar(8, 255, 255);
+        lower_red_2 = new OpenCvSharp.Scalar(160, 150, 70);
+        higher_red_2 = new OpenCvSharp.Scalar(180, 255, 255);
+        lower_yellow = new OpenCvSharp.Scalar(20, 120, 75);
+        higher_yellow = new OpenCvSharp.Scalar(60, 255, 255);
+        lower_blue = new OpenCvSharp.Scalar(110, 50, 50);
+        higher_blue = new OpenCvSharp.Scalar(130, 255, 255);
+
+        this.debugDetection = DebugDetection;
+    }
+
     public StateResult detectState(Mat frame)
     {
         // Image Preprocessing
         Mat preproccessed = new Mat();
-        imagePreprocessing(frame, out preproccessed);
+        Mat cImg = new Mat();
 
-        List<Point[]> contour_list;
+        imagePreprocessing(frame, out preproccessed, out cImg);
+
+        int[] board_coords;
         List<OpenCvSharp.Rect> rect_list;
         List<int[]> position_list;
 
         // setup lists of holedata
-        setupLists(preproccessed, out contour_list, out rect_list, out position_list);
+        setupListsNew(preproccessed, out rect_list, out position_list, out board_coords);
+        //setupLists(preproccessed, out contour_list, out rect_list, out position_list);
 
         if (position_list.Count > 0)
         {
-            bool stateDetected = getState(rect_list, position_list, contour_list, frame, out StateResult result);
-            result.Frame = preproccessed;
+            bool stateDetected = getState(rect_list, position_list, frame, out StateResult result);
+            result.boardX = board_coords[0];
+            result.boardY = board_coords[1];
+            if (debugDetection)
+            {
+                result.Frame = preproccessed;
+            }
+            else
+            {
+                preproccessed.Dispose();
+                cImg.Dispose();
+            }
+            
             if (stateDetected)
             {
                 result.isValid = isValid(result);
@@ -79,7 +109,7 @@ public class StateDetection
     }
 
     // imagepreprocessing for board detection
-    private void imagePreprocessing(Mat FrameIn, out Mat FrameOut)
+    private void imagePreprocessing(Mat FrameIn, out Mat FrameOut, out Mat CImg)
     {
         // Frame in HSV-ColorSpace
         Mat hsv = new Mat();
@@ -98,46 +128,20 @@ public class StateDetection
         Cv2.MedianBlur(board_only, board_only_blurred, 11);
         board_only.Dispose();
 
-        Mat cimg = new Mat();
-        Cv2.CvtColor(board_only_blurred, cimg, ColorConversionCodes.BGR2GRAY);
+        CImg = new Mat();
+        Cv2.CvtColor(board_only_blurred, CImg, ColorConversionCodes.RGB2GRAY);
         board_only_blurred.Dispose();
 
         Mat thresh = new Mat();
-        Cv2.Threshold(cimg, thresh, 0, 255, ThresholdTypes.BinaryInv | ThresholdTypes.Otsu);
-        board_only_blurred.Dispose();
+        Cv2.Threshold(CImg, thresh, 0, 255, ThresholdTypes.BinaryInv | ThresholdTypes.Otsu);
 
-        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(3, 15));
+        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(21, 3));
 
         FrameOut = new Mat();
-        Cv2.Erode(thresh, FrameOut, kernel, null, 1);
-
+        //Cv2.Erode(thresh, FrameOut, kernel, null, 1);
+        Cv2.Erode(thresh, FrameOut, kernel);
         thresh.Dispose();
         kernel.Dispose();
-
-        //// convert to grayscale
-        //Mat board_only_gray = new Mat();
-        //Cv2.CvtColor(board_only, board_only_gray, ColorConversionCodes.BGR2GRAY);
-        //board_only.Dispose();
-
-        //// threshold grayscale
-        //Mat thresh = new Mat();
-        //Cv2.Threshold(board_only_gray, thresh, 10, 255, ThresholdTypes.Binary);
-        //board_only_gray.Dispose();
-
-        //Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3));
-        //Mat dilated = new Mat();
-        //Cv2.Dilate(thresh, dilated, kernel, null, 1);
-        //thresh.Dispose();
-
-        //Mat eroded = new Mat();
-        //Cv2.Erode(dilated, eroded, kernel, null, 1);
-        //kernel.Dispose();
-
-        //// canny edge detection
-        //FrameOut = new Mat();
-        //Cv2.Canny(eroded, FrameOut, 175, 200);
-        //dilated.Dispose();
-        //eroded.Dispose();
     } 
 
     // setup list of holes
@@ -191,13 +195,19 @@ public class StateDetection
             }
 
         }
-
-        var unique_position_list = position_list.Distinct().ToList();
     }
 
 
-    private void setupLists(Mat preproccessed)
+    private void setupListsNew(Mat preproccessed, out List<OpenCvSharp.Rect> rect_list, out List<int[]> position_list, out int[] board_coords)
     {
+        rect_list = new List<OpenCvSharp.Rect>();
+        position_list = new List<int[]>();
+        board_coords = new int[2];
+
+        // möglicherweise unnötig
+        // Point[][] contours;
+        // HierarchyIndex[] hierarchyIndexes;
+
         Mat labels = new Mat();
         Mat stats = new Mat();
         Mat centroids = new Mat();
@@ -212,33 +222,50 @@ public class StateDetection
 
         for (int i = 0; i < num_labels; i++)
         {
-            if (stats.At<int>(i, -1) < 1000)
+            if (stats.At<int>(i, 4) < 1000)
             {
                 count_circles += 1;
-                if (left_c >= centroids.At<int>(i, 0))
+                //OpenCvSharp.Rect rect = Cv2.BoundingRect(labels[i]);
+                
+                int x_rect = stats.At<int>(i, 0);
+                int y_rect = stats.At<int>(i, 1);
+                int x_center_rect = (int)centroids.At<double>(i, 0);
+                int y_center_rect = (int)centroids.At<double>(i, 1); ;
+                int w_rect = stats.At<int>(i, 2);
+                int h_rect = stats.At<int>(i, 3);
+                int area_rect = w_rect * h_rect;
+
+                OpenCvSharp.Rect rect = new OpenCvSharp.Rect(x_rect, y_rect, w_rect, h_rect);
+
+                position_list.Add(new int[] { x_center_rect, y_center_rect });
+                rect_list.Add(rect);
+
+                //only needed if with houghcircles
+                if (left_c >= (int)centroids.At<double>(i, 0))
                 {
-                    left_c = (int)centroids.At<int>(i, 0);
+                    left_c = (int)centroids.At<double>(i, 0);
                 }
-                if (right_c >= centroids.At<int>(i, 0))
+                if (right_c >= (int)centroids.At<double>(i, 0))
                 {
-                    right_c = (int)centroids.At<int>(i, 0);
+                    right_c = (int)centroids.At<double>(i, 0);
                 }
-                if (top_c >= centroids.At<int>(i, 1))
+                if (top_c >= (int)centroids.At<double>(i, 1))
                 {
-                    top_c = (int)centroids.At<int>(i, 1);
+                    top_c = (int)centroids.At<double>(i, 1);
                 }
-                if (bottom_c >= centroids.At<int>(i, 1))
+                if (bottom_c >= (int)centroids.At<double>(i, 1))
                 {
-                    bottom_c = (int)centroids.At<int>(i, 1);
+                    bottom_c = (int)centroids.At<double>(i, 1);
                 }
             }
         }
 
-        Debug.Log("Field objects: " + count_circles);
+        board_coords[0] = right_c;
+        board_coords[1] = bottom_c;
     }
 
     // get current playstate
-    private bool getState(List<OpenCvSharp.Rect> rect_list, List<int[]> position_list, List<Point[]> contour_list, Mat frame, out StateResult result)
+    private bool getState(List<OpenCvSharp.Rect> rect_list, List<int[]> position_list, Mat frame, out StateResult result)
     {
         // Frame in HSV-ColorSpace
         result = new StateResult();

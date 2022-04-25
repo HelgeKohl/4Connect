@@ -18,6 +18,7 @@ public class NaoSocketServer : MonoBehaviour
     public static WinState WinState { get; private set; }
     public static int SuggestedIndex { get; private set; }
     public static bool NaoRequestActive { get; internal set; }
+    public static bool NaoRequestFinished { get; internal set; }
 
     public static string PythonNaoPath { 
         get
@@ -111,6 +112,7 @@ public class NaoSocketServer : MonoBehaviour
                 Debug.Log("Waiting for Connection");
                 handler = listener.Accept();
                 Debug.Log("Client Connected");
+                NaoSocketServer.NaoRequestFinished = false;
                 data = null;
 
                 // An incoming connection needs to be processed.
@@ -156,6 +158,8 @@ public class NaoSocketServer : MonoBehaviour
                         NaoSocketServer.CurrentTexture2D = null;
 
                         NaoSocketServer.NaoRequestActive = true;
+
+                        Debug.Log("Request Active");
                         //NaoSocketServer.Image.LoadImage(imgBytes);
 
                         //AppendAllBytes(file, Encoding.ASCII.GetBytes(data));
@@ -181,7 +185,6 @@ public class NaoSocketServer : MonoBehaviour
 
                         items[0] = (int) NaoSocketServer.WinState;
                         items[1] = NaoSocketServer.SuggestedIndex;
-                        Debug.Log(items[0] + " ... " + items[1]);
                         byte[] packed = StructConverter.Pack(items);
 
                         handler.Send(packed);
@@ -228,7 +231,6 @@ public class NaoSocketServer : MonoBehaviour
     {
         WinState = winState;
         SuggestedIndex = suggestedIndex;
-        Debug.Log("" + winState);
         Debug.Log("Winstate: " + (int)WinState + " SuggestedIndex: " + suggestedIndex);
     }
 }

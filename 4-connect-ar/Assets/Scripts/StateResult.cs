@@ -17,6 +17,8 @@ public class StateResult
     public bool isValid { get; set; }
     public int MeanChipSize { get; set; }
     public Mat Frame { get; set; }
+    public int boardX { get; set; }
+    public int boardY { get; set; }
 
     public StateResult()
     {

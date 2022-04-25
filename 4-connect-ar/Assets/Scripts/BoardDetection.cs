@@ -18,7 +18,6 @@ public class BoardDetection : MonoBehaviour
     public BaseAgent Agent;
     public RectTransform CanvasRectTransform;
 
-    private ObjectDetection objectDetection;
     private StateDetection stateDetection;
     private Board board;
     private new CustomCamera camera;
@@ -48,14 +47,23 @@ public class BoardDetection : MonoBehaviour
     public bool debugFps;
     System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
+    bool isCameraInitialized = false;
+
     void Start()
     {
         // https://www.nuget.org/packages/OpenCvSharp4/
         // https://www.tech-quantum.com/have-fun-with-webcam-and-opencv-in-csharp-part-1/
         // https://www.tech-quantum.com/have-fun-with-webcam-and-opencv-in-csharp-part-2/
 
-        objectDetection = new ObjectDetection();
-        stateDetection = new StateDetection();
+        if (debugDetection)
+        {
+            stateDetection = new StateDetection(debugDetection);
+        }
+        else
+        {
+            stateDetection = new StateDetection();
+        }
+        
         board = new Board(this);
         board.redChip = stateDetection.id_red;
         board.yellowChip = stateDetection.id_yellow;
@@ -77,8 +85,6 @@ public class BoardDetection : MonoBehaviour
     {
         this.suggestedIndex = columnIndex;
     }
-
-    bool isCameraInitialized = false;
 
     internal Mat GetNaoImageFrameAsMat()
     {
@@ -260,12 +266,13 @@ public class BoardDetection : MonoBehaviour
         //{
         if (NaoSocketServer.NaoRequestActive 
             && threadResponseStateResult != null
-            && threadResponseStateResult.isValid)
+            && threadResponseStateResult.isValid
+            && suggestedIndex != -1)
         {
             NaoSocketServer.SetState(board.WinState, suggestedIndex);
             NaoSocketServer.ImageBytes = null;
             NaoSocketServer.NaoRequestActive = false;
-            //threadInputMat = null;
+            threadInputMat = null;
         }
             //threadInputMat = null;
         //}
@@ -276,6 +283,11 @@ public class BoardDetection : MonoBehaviour
         if (debugFps && stopwatch.ElapsedMilliseconds != 0)
         {
             Debug.Log(stopwatch.ElapsedMilliseconds);
+        }
+
+        if (debugDetection)
+        {
+            Resources.UnloadUnusedAssets();
         }
     }
 
@@ -320,26 +332,16 @@ public class BoardDetection : MonoBehaviour
         {
             try
             {
-                if (camera == null || threadInputMat == null || threadResponseMat != null || Agent.Board == null)
+                if (camera == null || threadInputMat == null || threadResponseMat != null || Agent.Board == null || NaoSocketServer.NaoRequestFinished)
                 {
                     continue;
                 }
 
-                //BoardOperations regionSelectionOperation = BoardOperations.CropOuterRegion;
-                //Mat boardRegion = objectDetection.DetectObjects(threadInputMat, regionSelectionOperation);
-
-                //if (boardRegion == null)
-                //{
-                //    Debug.Log("Feld wurde nicht gefunden");
-                //    continue;
-                //}
-
                 // TODO: bei detectState statt mat nur noch das Teil-Rect aus DetectObjects übergeben
-                //StateResult result = stateDetection.detectState(boardRegion == null || regionSelectionOperation == BoardOperations.Highlight ? threadInputMat : boardRegion);
                 StateResult result = stateDetection.detectState(threadInputMat);
 
-                int boardX = objectDetection.BoardRegionBounds.X;
-                int boardY = objectDetection.BoardRegionBounds.Y;
+                int boardX = result.boardX;
+                int boardY = result.boardY;
 
                 if (result.isValid)
                 {
@@ -353,8 +355,15 @@ public class BoardDetection : MonoBehaviour
                 threadResponseStateResult = result;
 
                 // Prüfe ob State sich geändert hat
-                bool gridStateHasChanged = stateChanged(result.State, board.State);
-                bool gridStateChangedRight = checkSuggestedCoin(result.State);
+
+                bool gridStateHasChanged = true;
+                bool gridStateChangedRight = true;
+                if (suggestedIndex >= 0)
+                {
+                    gridStateHasChanged = stateChanged(result.State, board.State);
+                    gridStateChangedRight = checkSuggestedCoin(result.State);
+                }
+                
 
                 if (!result.isValid)
                 {
@@ -375,7 +384,7 @@ public class BoardDetection : MonoBehaviour
                     //board.State = FlipArrayHorizontal(result.State);
                     board.State = result.State;
 
-                    if (gridStateHasChanged && result.isValid)
+                    if (gridStateHasChanged && result.isValid && gridStateChangedRight)
                     {
                         board.CurrentPlayer = result.CountRedChips > result.CountYellowChips ? Player.Yellow : Player.Red;
                         if (result.CountRedChips + result.CountYellowChips < 42)
@@ -385,16 +394,16 @@ public class BoardDetection : MonoBehaviour
                         board.UpdateWinstate();
                     }
 
-                    //threadResponseMat = boardRegion;
                 }
 
                 // Was soll angezeigt werden
-                //threadResponseMat = boardRegion;
 
                 if (this.debug)
                 {
                     board.printGrid();
                 }
+
+                NaoSocketServer.NaoRequestFinished = true;
             }
             catch (ThreadAbortException)
             {
@@ -424,11 +433,16 @@ public class BoardDetection : MonoBehaviour
 
     private bool checkSuggestedCoin(int[,] inputGrid)
     {
+        if(suggestedIndex < 0)
+        {
+            return true;
+        }
+
         for(int i = 0; i < 6; i++)
         {
-            if (board.State[suggestedIndex, i] != 0)
+            if (board.State[suggestedIndex, i] == 0)
             {
-                if(inputGrid[suggestedIndex, i-1] == -1)
+                if(inputGrid[suggestedIndex, i] == -1)
                 {
                     return true;
                 }
