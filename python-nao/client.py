@@ -38,7 +38,7 @@ TCP_PORT = 9001
 ########################
 # Konfiguration Weitere
 ########################
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 65536
 
 ########################
 # Start

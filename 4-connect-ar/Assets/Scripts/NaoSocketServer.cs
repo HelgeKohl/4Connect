@@ -19,7 +19,7 @@ public class NaoSocketServer : MonoBehaviour
     public static int SuggestedIndex { get; private set; }
     public static bool NaoRequestActive { get; internal set; }
     public static bool NaoRequestFinished { get; internal set; }
-
+    public static int BufferSize { get; internal set;  } = 65536;
     public static string PythonNaoPath { 
         get
         {
@@ -78,13 +78,12 @@ public class NaoSocketServer : MonoBehaviour
             stream.Write(bytes, 0, bytes.Length);
         }
     }
-
     void networkCode()
     {
         string data;
 
         // Data buffer for incoming data.
-        byte[] bytes = new Byte[1024];
+        byte[] bytes = new Byte[BufferSize];
 
         // host running the application.
         Debug.Log("Ip " + getIPAddress().ToString());
@@ -97,6 +96,8 @@ public class NaoSocketServer : MonoBehaviour
 
         // Bind the socket to the local endpoint and 
         // listen for incoming connections.
+
+        int packagesReceived = 0;
 
         try
         {
@@ -118,7 +119,9 @@ public class NaoSocketServer : MonoBehaviour
                 // An incoming connection needs to be processed.
                 while (keepReading)
                 {
-                    bytes = new byte[1024];
+                    packagesReceived += 1;
+
+                    bytes = new byte[BufferSize];
                     int bytesRec = handler.Receive(bytes);
 
                     if (bytesRec <= 0)
@@ -127,11 +130,14 @@ public class NaoSocketServer : MonoBehaviour
                         handler.Disconnect(true);
                         break;
                     }
-                    
+
+                    Debug.Log("Packages received: " + packagesReceived);
+
                     AppendAllBytes(Path.Combine(PythonNaoPath, "tmp", "unity.png"), bytes);
                     data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
                     if (data.IndexOf("<EOF>") > -1)
                     {
+                        packagesReceived = 0;
                         Debug.Log("EOF");
                         string file = Path.Combine(PythonNaoPath, "tmp", "unity.png");
                         string file_current = Path.Combine(PythonNaoPath, "tmp", "unity_current.png");
