@@ -438,7 +438,31 @@ public class BoardDetection : MonoBehaviour
             return true;
         }
 
-        for(int i = 0; i < 6; i++)
+        Debug.Log("Akt. Suggested Index: " + suggestedIndex);
+
+        string grid_str = "";
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                grid_str += inputGrid[j, i] + "\t";
+            }
+            grid_str += "\n";
+        }
+        Debug.Log("Akt. State: \n" + grid_str);
+
+        string grid_str_2 = "";
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                grid_str_2 += board.State[j, i] + "\t";
+            }
+            grid_str_2 += "\n";
+        }
+        Debug.Log("Letzter State: \n" + grid_str_2);
+
+        for (int i = 0; i < 6; i++)
         {
             if (board.State[suggestedIndex, i] == 0)
             {
@@ -448,10 +472,13 @@ public class BoardDetection : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log(board.State[suggestedIndex, i]);
+                    Debug.Log(inputGrid[suggestedIndex, i]);
                     return false;
                 }
             }
         }
+        Debug.Log("hier sollten wir garnicht landen");
         return false;
     }
 
