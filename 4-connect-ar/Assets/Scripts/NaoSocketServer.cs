@@ -112,7 +112,6 @@ public class NaoSocketServer : MonoBehaviour
                 Debug.Log("Waiting for Connection");
                 handler = listener.Accept();
                 Debug.Log("Client Connected");
-                NaoSocketServer.NaoRequestFinished = false;
                 data = null;
 
                 // An incoming connection needs to be processed.
@@ -163,8 +162,9 @@ public class NaoSocketServer : MonoBehaviour
                         //NaoSocketServer.Image.LoadImage(imgBytes);
 
                         //AppendAllBytes(file, Encoding.ASCII.GetBytes(data));
+                        NaoSocketServer.NaoRequestFinished = false;
 
-                        while(NaoSocketServer.NaoRequestActive)
+                        while (NaoSocketServer.NaoRequestActive)
                         {
                             System.Threading.Thread.Sleep(1);
                         }

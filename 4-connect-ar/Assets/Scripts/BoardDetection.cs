@@ -267,12 +267,13 @@ public class BoardDetection : MonoBehaviour
         if (NaoSocketServer.NaoRequestActive 
             && threadResponseStateResult != null
             && threadResponseStateResult.isValid
-            && suggestedIndex != -1)
+            && suggestedIndex != -1
+            && NaoSocketServer.NaoRequestFinished)
         {
             NaoSocketServer.SetState(board.WinState, suggestedIndex);
             NaoSocketServer.ImageBytes = null;
-            NaoSocketServer.NaoRequestActive = false;
             threadInputMat = null;
+            NaoSocketServer.NaoRequestActive = false;
         }
             //threadInputMat = null;
         //}
@@ -438,7 +439,7 @@ public class BoardDetection : MonoBehaviour
             return true;
         }
 
-        Debug.Log("Akt. Suggested Index: " + suggestedIndex);
+        Debug.Log("Akt. Suggested Index: " + NaoSocketServer.SuggestedIndex);
 
         string grid_str = "";
         for (int i = 0; i < 6; i++)
@@ -464,16 +465,16 @@ public class BoardDetection : MonoBehaviour
 
         for (int i = 0; i < 6; i++)
         {
-            if (board.State[suggestedIndex, i] == 0)
+            if (board.State[NaoSocketServer.SuggestedIndex, i] == 0)
             {
-                if(inputGrid[suggestedIndex, i] == -1)
+                if(inputGrid[NaoSocketServer.SuggestedIndex, i] == -1)
                 {
                     return true;
                 }
                 else
                 {
-                    Debug.Log(board.State[suggestedIndex, i]);
-                    Debug.Log(inputGrid[suggestedIndex, i]);
+                    Debug.Log(board.State[NaoSocketServer.SuggestedIndex, i]);
+                    Debug.Log(inputGrid[NaoSocketServer.SuggestedIndex, i]);
                     return false;
                 }
             }
