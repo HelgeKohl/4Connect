@@ -163,16 +163,16 @@ public class NaoSocketServer : MonoBehaviour
                         NaoSocketServer.CurrentTexture2D = null;
 
                         NaoSocketServer.NaoRequestActive = true;
+                        NaoSocketServer.NaoRequestFinished = false;
 
                         Debug.Log("Request Active");
                         //NaoSocketServer.Image.LoadImage(imgBytes);
 
                         //AppendAllBytes(file, Encoding.ASCII.GetBytes(data));
-                        NaoSocketServer.NaoRequestFinished = false;
 
                         while (NaoSocketServer.NaoRequestActive)
                         {
-                            System.Threading.Thread.Sleep(1);
+                            System.Threading.Thread.Sleep(100);
                         }
 
 
@@ -207,7 +207,7 @@ public class NaoSocketServer : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.Log(e.ToString());
+            Debug.Log("NAO SOCKET ERROR - " + e.ToString());
         }
     }
 

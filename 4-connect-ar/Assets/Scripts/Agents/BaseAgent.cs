@@ -22,6 +22,12 @@ public class BaseAgent : Agent
     /// Wie heiße ich?
     /// </summary>
     public string PlayerName { get; set; }
+    public bool IsThinking { get; internal set; }
+
+    /// <summary>
+    /// weird
+    /// </summary>
+    //public static bool IsThinking { get; set; }
 
     /// <summary>
     /// Initialisierung
@@ -41,6 +47,7 @@ public class BaseAgent : Agent
     public override void OnActionReceived(ActionBuffers actions)
     {
         Board.SelectColumn(actions.DiscreteActions[0], Player);
+        IsThinking = false;
     }
 
     /// <summary>

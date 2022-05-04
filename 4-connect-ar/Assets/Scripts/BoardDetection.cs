@@ -361,7 +361,9 @@ public class BoardDetection : MonoBehaviour
                 bool gridStateChangedRight = true;
                 if (suggestedIndex >= 0)
                 {
+                    // Aktuelles Spielfeld ist anders als das davor, egal, ob mehr oder weniger Chips sind?
                     gridStateHasChanged = stateChanged(result.State, board.State);
+                    // Wir prüfen, ob an dem davor vorgeschlagenen Spielfeldslot der gewünschte Chip eingeworfen wurde
                     gridStateChangedRight = checkSuggestedCoin(result.State);
                 }
                 
@@ -375,10 +377,12 @@ public class BoardDetection : MonoBehaviour
                 {
                     if (!gridStateHasChanged)
                     {
+                        // @Nao: Es hat sich nichts geändert
                         board.WinState = WinState.NoChange;
                     }
                     if (!gridStateChangedRight)
                     {
+                        // @Nao: Der Benutzer hat den gelben Chip nicht an der vom Nao gewünschten Spalte eingeworfen
                         board.WinState = WinState.Wrong;
                     }
                     // aktualisieren des States
@@ -388,10 +392,19 @@ public class BoardDetection : MonoBehaviour
                     if (gridStateHasChanged && result.isValid && gridStateChangedRight)
                     {
                         board.CurrentPlayer = result.CountRedChips > result.CountYellowChips ? Player.Yellow : Player.Red;
+
                         if (result.CountRedChips + result.CountYellowChips < 42)
                         {
+                            Debug.Log("Nao is thinking ...");
+
+                            Agent.IsThinking = true;
                             Agent.RequestDecision();
-                        } 
+                            while (Agent.IsThinking)
+                            {
+                                Debug.Log("Still sinking ...");
+                                System.Threading.Thread.Sleep(10);
+                            }
+                        }
                         board.UpdateWinstate();
                     }
 
@@ -473,6 +486,7 @@ public class BoardDetection : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("checkSuggestedCoin");
                     Debug.Log(board.State[NaoSocketServer.SuggestedIndex, i]);
                     Debug.Log(inputGrid[NaoSocketServer.SuggestedIndex, i]);
                     return false;

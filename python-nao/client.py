@@ -7,7 +7,12 @@ from struct import calcsize
 # Konfiguration der zu sendenden Datei
 ########################
 dir_path = os.path.dirname(os.path.realpath(__file__))
-file = os.path.join(dir_path, "res", "19_04_2022", "state11.png")
+# file = os.path.join(dir_path, "res", "19_04_2022", "state11.png")
+
+file = os.path.join(dir_path, "res", "game", "step_1.png")
+# file = os.path.join(dir_path, "res", "game", "step_2.png")
+# file = os.path.join(dir_path, "res", "game", "step_3.png")
+
 
 
 ########################
@@ -85,6 +90,8 @@ recieved_f = data
 magic_number = 16777216
 state = int(recieved_f[0] / magic_number)
 column = int(recieved_f[1] / magic_number)
+
+column = column + 1
 
 print('state: ',state)
 print('column: ',column)
