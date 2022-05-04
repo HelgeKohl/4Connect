@@ -379,11 +379,13 @@ public class BoardDetection : MonoBehaviour
                     {
                         // @Nao: Es hat sich nichts geändert
                         board.WinState = WinState.NoChange;
+                        Debug.Log("Es hat sich nichts geändert");
                     }
-                    if (!gridStateChangedRight)
+                    if (!gridStateChangedRight && gridStateHasChanged)
                     {
                         // @Nao: Der Benutzer hat den gelben Chip nicht an der vom Nao gewünschten Spalte eingeworfen
                         board.WinState = WinState.Wrong;
+                        Debug.Log("Der Benutzer hat den gelben Chip nicht an der vom Nao gewünschten Spalte eingeworfen");
                     }
                     // aktualisieren des States
                     //board.State = FlipArrayHorizontal(result.State);
@@ -393,6 +395,7 @@ public class BoardDetection : MonoBehaviour
                     {
                         board.CurrentPlayer = result.CountRedChips > result.CountYellowChips ? Player.Yellow : Player.Red;
 
+                        bool gewinneIchMitDiesemZug = false;
                         if (result.CountRedChips + result.CountYellowChips < 42)
                         {
                             Debug.Log("Nao is thinking ...");
@@ -404,8 +407,24 @@ public class BoardDetection : MonoBehaviour
                                 Debug.Log("Still sinking ...");
                                 System.Threading.Thread.Sleep(10);
                             }
+
+                            // Prüfe, ob der Nao mit dem nächsten Zug gewinnen würde
+                            Board boardSimulateCheckNextTurn = new Board();
+                            boardSimulateCheckNextTurn.State = board.State.Clone() as int[,];
+                            boardSimulateCheckNextTurn.CurrentPlayer = board.CurrentPlayer;
+                            boardSimulateCheckNextTurn.emptyChip = board.emptyChip;
+                            boardSimulateCheckNextTurn.redChip = board.redChip;
+                            boardSimulateCheckNextTurn.yellowChip = board.yellowChip;
+                            boardSimulateCheckNextTurn.InsertChip(suggestedIndex);
+                            boardSimulateCheckNextTurn.UpdateWinstate();
+
+                            gewinneIchMitDiesemZug = boardSimulateCheckNextTurn.WinState == WinState.YellowWin;
                         }
                         board.UpdateWinstate();
+                        if (gewinneIchMitDiesemZug)
+                        {
+                            board.WinState = WinState.YellowWin;
+                        }
                     }
 
                 }

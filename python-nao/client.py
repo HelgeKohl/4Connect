@@ -10,8 +10,12 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 # file = os.path.join(dir_path, "res", "19_04_2022", "state11.png")
 
 file = os.path.join(dir_path, "res", "game", "step_1.png")
-# file = os.path.join(dir_path, "res", "game", "step_2.png")
-# file = os.path.join(dir_path, "res", "game", "step_3.png")
+file = os.path.join(dir_path, "res", "game", "step_2.png")
+file = os.path.join(dir_path, "res", "game", "step_3.png")
+
+# Nao gewinnt :)
+# file = os.path.join(dir_path, "res", "19_04_2022", "161670_camImage.png")
+
 
 
 
