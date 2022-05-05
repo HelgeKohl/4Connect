@@ -19,6 +19,7 @@ public class StateResult
     public Mat Frame { get; set; }
     public int boardX { get; set; }
     public int boardY { get; set; }
+    public int HolesFound { get; set; } = 0;
 
     public StateResult()
     {

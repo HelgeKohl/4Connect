@@ -331,7 +331,7 @@ public class BoardEvaluator// : MonoBehaviour
         }
         else if (BlockNThreatLeft(column, row, chip, 1, 4, 3))
         {
-            reward += POINTS_BLOCK_3_IN_A_ROW;
+            reward += 2 * POINTS_BLOCK_3_IN_A_ROW;
             //Debug.LogWarning("Blocked IsThreatToLeft: " + 2);
         }
 
@@ -343,7 +343,7 @@ public class BoardEvaluator// : MonoBehaviour
         }
         else if (BlockNThreatRight(column, row, chip, 2, 5, 3))
         {
-            reward += POINTS_BLOCK_3_IN_A_ROW;
+            reward += 2 * POINTS_BLOCK_3_IN_A_ROW;
             //Debug.LogWarning("Blocked IsThreatToRight: " + 2);
         }
 

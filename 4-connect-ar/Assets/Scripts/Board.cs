@@ -11,6 +11,7 @@ public enum WinState
     RedWin = 3,
     MatchNotFinished = 4,
     Draw = 5,
+    AmountOfHolesIsWrong = 6,
 }
 
 public enum Player

@@ -178,17 +178,7 @@ public class NaoSocketServer : MonoBehaviour
 
                         data = null;
 
-                        
-
-                        //struct.pack('!ii', state, column)
                         object[] items = new object[2];
-                        //items[0] = (byte)2;
-                        //items[1] = (byte)2;
-                        //items[0] = 1;
-                        //items[1] = 2;
-                        items[0] = new System.Random().Next(4);
-                        items[1] = new System.Random().Next(7);
-
                         items[0] = (int) NaoSocketServer.WinState;
                         items[1] = NaoSocketServer.SuggestedIndex;
                         byte[] packed = StructConverter.Pack(items);

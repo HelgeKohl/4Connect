@@ -73,6 +73,7 @@ public class StateDetection
         if (position_list.Count > 0)
         {
             bool stateDetected = getState(rect_list, position_list, frame, out StateResult result);
+            result.HolesFound = position_list.Count;
             result.boardX = board_coords[0];
             result.boardY = board_coords[1];
             if (debugDetection)
@@ -135,7 +136,16 @@ public class StateDetection
         Mat thresh = new Mat();
         Cv2.Threshold(CImg, thresh, 0, 255, ThresholdTypes.BinaryInv | ThresholdTypes.Otsu);
 
-        Mat kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(21, 3));
+        Mat kernel = null; 
+        // TODO: ZUM TESTEN, MUSS DANN ENTFERNT WERDEN
+        if (new System.Random().Next(4) % 2 == 0)
+        {
+            kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(15, 3));
+        }
+        else
+        {
+            kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(21, 21));
+        }
 
         FrameOut = new Mat();
         //Cv2.Erode(thresh, FrameOut, kernel, null, 1);

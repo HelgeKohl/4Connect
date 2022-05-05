@@ -264,9 +264,23 @@ public class BoardDetection : MonoBehaviour
         //if (threadResponseStateResult != null && threadResponseStateResult.isValid)
         //if (threadResponseStateResult != null)
         //{
+        bool forceSendMessage = false;
+        if (threadResponseStateResult != null && threadResponseStateResult.HolesFound != 42)
+        {
+            // TODO: Ob er schummelt, muss in Abhängigkeit davon sein,
+            // ob das alte Bild überhaupt gültig war.
+            // Wenn das Bild nur 41 Löcher hat, der Nao dann ein
+            // neues Bild schickt, darf er das Bild mit 41 Löchern
+            // nicht als "richtiges Bild" erkannt werden.
+            // Diese Stelle muss mit .HolesFound vom StateResult ergänzt werden.
+            forceSendMessage = true;
+            board.WinState = WinState.AmountOfHolesIsWrong;
+            suggestedIndex = 0;
+        }
+        //threadResponseStateResult
         if (NaoSocketServer.NaoRequestActive 
             && threadResponseStateResult != null
-            && threadResponseStateResult.isValid
+            && (threadResponseStateResult.isValid || forceSendMessage)
             && suggestedIndex != -1
             && NaoSocketServer.NaoRequestFinished)
         {
